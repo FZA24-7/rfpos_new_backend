@@ -1,4 +1,4 @@
-Set-Content -Path package.json -Value '{
+{
   "name": "mafk-24-7-retail-flow-pos",
   "version": "0.1.0",
   "private": true,
@@ -6,11 +6,7 @@ Set-Content -Path package.json -Value '{
   "type": "module",
   "packageManager": "pnpm@10.34.5",
   "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=9.0.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": []
+    "node": ">=18.0.0"
   },
   "scripts": {
     "db:generate": "pnpm --filter @mafk/database run generate",
@@ -46,4 +42,4 @@ Set-Content -Path package.json -Value '{
     "typescript": "5.9.3",
     "typescript-eslint": "8.71.0"
   }
-}' -Encoding utf8
+}
