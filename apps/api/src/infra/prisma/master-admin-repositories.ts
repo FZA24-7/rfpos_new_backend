@@ -97,6 +97,21 @@ export class PrismaTenantProvisioningRepository implements TenantProvisioningRep
           permissions: DEFAULT_ROLE_PERMISSIONS[systemRole],
         }));
 
+        // Few round trips on purpose: on a remote database (Vercel + Supabase) every query costs a network hop, and one
+        // nested `connect` per permission (about 190 for the admin role) made this transaction run for minutes.
+        const wantedKeys = [...new Set(roleEntries.flatMap((e) => e.permissions))];
+        const permissionRows = await tx.permission.findMany({
+          where: { key: { in: wantedKeys } },
+          select: { id: true, key: true },
+        });
+        const permissionIdByKey = new Map(permissionRows.map((p) => [p.key, p.id]));
+        const missing = wantedKeys.filter((k) => !permissionIdByKey.has(k));
+        if (missing.length > 0) {
+          throw new Error(
+            `Permission catalog is missing: ${missing.join(', ')}. Run the seed (db:seed) first.`,
+          );
+        }
+
         const createdRoles: Record<string, { id: string }> = {};
         for (const entry of roleEntries) {
           const role = await tx.role.create({
@@ -106,10 +121,13 @@ export class PrismaTenantProvisioningRepository implements TenantProvisioningRep
               name: entry.systemRole,
               systemRole: entry.systemRole,
               isSystem: true,
-              permissions: {
-                create: entry.permissions.map((key) => ({ permission: { connect: { key } } })),
-              },
             },
+          });
+          await tx.rolePermission.createMany({
+            data: entry.permissions.map((key) => ({
+              roleId: role.id,
+              permissionId: permissionIdByKey.get(key) as string,
+            })),
           });
           createdRoles[entry.systemRole] = { id: role.id };
         }
