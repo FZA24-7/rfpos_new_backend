@@ -14,7 +14,13 @@ export const createPrismaClient = (opts: CreatePrismaClientOptions): PrismaClien
     connectionString: opts.databaseUrl,
     ...(opts.poolMax !== undefined ? { max: opts.poolMax } : {}),
   });
-  return new PrismaClient({ adapter, log: opts.log ?? ['error', 'warn'] });
+  // Prisma's default interactive-transaction limit is 5 s. Multi-step writes (for example creating a client with its roles
+  // and ~190 permission links) take longer when the database is a network hop away, as on Vercel + Supabase.
+  return new PrismaClient({
+    adapter,
+    log: opts.log ?? ['error', 'warn'],
+    transactionOptions: { maxWait: 10_000, timeout: 30_000 },
+  });
 };
 
 export type { PrismaClient } from './generated/client.js';
