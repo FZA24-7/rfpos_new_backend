@@ -82,10 +82,14 @@ const proxyToServer = async (request: Request): Promise<Response> => {
   if (!target) return text(404, 'Not found');
   const hasBody = request.method !== 'GET' && request.method !== 'HEAD';
   try {
+    // The body is read fully first and sent with a Content-Length. Streaming it (chunked) works on a plain
+    // http:// server but can fail against https:// hosts such as Vercel, which made every POST (login) fail
+    // with "cannot reach the server" while GET (health) worked.
+    const body = hasBody ? await request.arrayBuffer() : undefined;
     const upstream = await net.fetch(target, {
       method: request.method,
       headers: filterRequestHeaders(request.headers.entries()),
-      ...(hasBody ? { body: request.body, duplex: 'half' } : {}),
+      ...(body !== undefined && body.byteLength > 0 ? { body } : {}),
       credentials: 'include',
       redirect: 'manual',
     } as RequestInit);
