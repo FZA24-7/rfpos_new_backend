@@ -30,8 +30,8 @@ import { PurchaseService } from '../services/purchase.service.js';
 import { SaleService } from '../services/sale.service.js';
 import { createApp } from '../http/app.js';
 
-export const buildProductionApp = (env: Env, logger: Logger) => {
-  const prisma = buildPrismaClient(env.DATABASE_URL);
+export const buildProductionApp = (env: Env, logger: Logger, poolMax?: number) => {
+  const prisma = buildPrismaClient(env.DATABASE_URL, poolMax);
 
   const repos: Repositories = createPrismaRepositories(prisma);
 
@@ -68,6 +68,7 @@ export const buildProductionApp = (env: Env, logger: Logger) => {
   const reportService = new ReportService(repos);
 
   const app = createApp({
+    trustProxy: env.TRUST_PROXY,
     logger,
     clientUrl: env.CLIENT_URL,
     isProduction: env.NODE_ENV === 'production',

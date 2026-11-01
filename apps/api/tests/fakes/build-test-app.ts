@@ -40,7 +40,7 @@ const logger = createLogger({ NODE_ENV: 'test' });
  * production uses, just with the Prisma adapters swapped for fakes (see
  * `docs/ARCHITECTURE.md` "Ports and adapters").
  */
-export const buildTestApp = (scenario: Scenario): Express => {
+export const buildTestApp = (scenario: Scenario, trustProxy?: number): Express => {
   const authService = new AuthService(scenario.repos, testHasher, testAccessTokens, {
     maxFailedAttempts: 5,
     lockoutWindowMs: 15 * 60_000,
@@ -72,6 +72,7 @@ export const buildTestApp = (scenario: Scenario): Express => {
     logger,
     clientUrl: 'http://localhost:5173',
     isProduction: false,
+    ...(trustProxy !== undefined ? { trustProxy } : {}),
     refreshTokenTtlDays: 14,
     accessTokens: testAccessTokens,
     authService,

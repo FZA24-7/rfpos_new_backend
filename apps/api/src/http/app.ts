@@ -60,6 +60,8 @@ export interface AppDependencies {
   logger: Logger;
   clientUrl: string;
   isProduction: boolean;
+  /** Number of reverse proxies in front of the API (env TRUST_PROXY). 0 = none. */
+  trustProxy?: number;
   refreshTokenTtlDays: number;
   accessTokens: AccessTokenService;
   authService: AuthService;
@@ -93,6 +95,7 @@ export const createApp = (deps: AppDependencies): Express => {
   const app = express();
 
   app.disable('x-powered-by');
+  if (deps.trustProxy !== undefined && deps.trustProxy > 0) app.set('trust proxy', deps.trustProxy);
   app.use(requestId);
   app.use(helmet());
   app.use(
