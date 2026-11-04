@@ -1,5 +1,9 @@
 import type { NextFunction, Request, Response } from 'express';
+<<<<<<< HEAD
 import { hasAllPermissions, hasAnyPermission } from '../../rbac/check.js';
+=======
+import { hasAllPermissions } from '../../rbac/check.js';
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 
 /**
  * Enforces permissions on the SERVER, as required by the spec - never trust a
@@ -37,6 +41,7 @@ export const requireTenant = (req: Request, res: Response, next: NextFunction): 
   }
   next();
 };
+<<<<<<< HEAD
 
 /**
  * Passes when the caller holds ANY of the listed permissions. Used where a screen is reachable both by a shared role
@@ -57,3 +62,5 @@ export const requireAnyPermission =
     }
     next();
   };
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3

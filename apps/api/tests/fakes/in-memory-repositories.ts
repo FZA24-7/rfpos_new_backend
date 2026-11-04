@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import { FakeAdminRepository } from './fake-admin-repository.js';
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 import { randomUUID } from 'node:crypto';
 import { buildLedger, summariseOutstanding } from '../../src/services/ledger.js';
 import { FakeSaleRepository } from './fake-sale-repository.js';
@@ -1404,7 +1407,10 @@ export interface FakeRepositories extends Repositories {
   expenses: FakeExpenseRepository;
   employees: FakeEmployeeRepository;
   reports: FakeReportRepository;
+<<<<<<< HEAD
   admin: FakeAdminRepository;
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 }
 
 export const createFakeRepositories = (): FakeRepositories => {
@@ -1461,6 +1467,9 @@ export const createFakeRepositories = (): FakeRepositories => {
     expenses,
     employees: new FakeEmployeeRepository(sales, auditLogs),
     reports: new FakeReportRepository(sales, products, categories, inventoryRepo, expenses),
+<<<<<<< HEAD
     admin: new FakeAdminRepository(users, roles, stores, auditLogs, sales, expenses),
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
   };
 };

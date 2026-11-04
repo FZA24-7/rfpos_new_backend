@@ -13,6 +13,21 @@ describe('GET /api/health', () => {
   });
 });
 
+<<<<<<< HEAD
+=======
+describe('TRUST_PROXY', () => {
+  it('uses the forwarded client address only when a proxy count is configured', async () => {
+    const scenario = await buildScenario();
+    const direct = buildTestApp(scenario);
+    const proxied = buildTestApp(scenario, 1);
+    expect(direct.get('trust proxy')).toBeFalsy();
+    expect(proxied.get('trust proxy')).toBe(1);
+    const res = await request(proxied).get('/api/health').set('X-Forwarded-For', '203.0.113.9');
+    expect(res.status).toBe(200);
+  });
+});
+
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 describe('POST /api/auth/login', () => {
   it('returns 200 + access token + refresh cookie on valid credentials', async () => {
     const scenario = await buildScenario();

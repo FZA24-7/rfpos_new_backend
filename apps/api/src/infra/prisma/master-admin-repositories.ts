@@ -1,6 +1,10 @@
 // DATABASE STATUS (Phase 4.2): NOT yet exercised against a database (tenant provisioning, stores, licences, health).
 // Typechecked against the generated client.
+<<<<<<< HEAD
 import { DEFAULT_ROLE_PERMISSIONS, PERMISSION_CATALOG } from '@mafk/shared';
+=======
+import { DEFAULT_ROLE_PERMISSIONS } from '@mafk/shared';
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 import type { PrismaClient } from '@mafk/database';
 import type {
   LicenseRepository,
@@ -63,6 +67,7 @@ export class PrismaTenantProvisioningRepository implements TenantProvisioningRep
 
   async provision(input: ProvisionTenantInput): Promise<ProvisionTenantResult> {
     try {
+<<<<<<< HEAD
       // The permission catalog is GLOBAL (not per tenant). Make sure it exists BEFORE opening the transaction, so
       // creating a client never depends on `pnpm db:seed` having been run, and so the transaction itself stays short.
       await this.prisma.permission.createMany({
@@ -180,6 +185,117 @@ export class PrismaTenantProvisioningRepository implements TenantProvisioningRep
         // (e.g. Supabase over the internet) can exceed - that surfaced as "Transaction already closed".
         { maxWait: 20_000, timeout: 60_000 },
       );
+=======
+      return await this.prisma.$transaction(async (tx) => {
+        const tenant = await tx.tenant.create({
+          data: {
+            code: input.code,
+            name: input.name,
+            legalName: input.legalName ?? null,
+            contactEmail: input.contactEmail ?? null,
+            contactPhone: input.contactPhone ?? null,
+            address: input.address ?? null,
+            currency: input.currency ?? 'PKR',
+            timezone: input.timezone ?? 'Asia/Karachi',
+          },
+        });
+
+        const store = await tx.store.create({
+          data: {
+            tenantId: tenant.id,
+            code: 'MAIN',
+            name: input.defaultStoreName,
+            isDefault: true,
+          },
+        });
+
+        // Create all four default tenant roles up front, so later phases can
+        // immediately assign Manager/Cashier/Inventory Staff without a
+        // separate "initialize roles" step.
+        const roleEntries = (
+          ['CLIENT_MASTER_ADMIN', 'MANAGER', 'CASHIER', 'INVENTORY_STAFF'] as const
+        ).map((systemRole) => ({
+          key: systemRole.toLowerCase().replace(/_/g, '-'),
+          systemRole,
+          permissions: DEFAULT_ROLE_PERMISSIONS[systemRole],
+        }));
+
+        // Few round trips on purpose: on a remote database (Vercel + Supabase) every query costs a network hop, and one
+        // nested `connect` per permission (about 190 for the admin role) made this transaction run for minutes.
+        const wantedKeys = [...new Set(roleEntries.flatMap((e) => e.permissions))];
+        const permissionRows = await tx.permission.findMany({
+          where: { key: { in: wantedKeys } },
+          select: { id: true, key: true },
+        });
+        const permissionIdByKey = new Map(permissionRows.map((p) => [p.key, p.id]));
+        const missing = wantedKeys.filter((k) => !permissionIdByKey.has(k));
+        if (missing.length > 0) {
+          throw new Error(
+            `Permission catalog is missing: ${missing.join(', ')}. Run the seed (db:seed) first.`,
+          );
+        }
+
+        const createdRoles: Record<string, { id: string }> = {};
+        for (const entry of roleEntries) {
+          const role = await tx.role.create({
+            data: {
+              tenantId: tenant.id,
+              key: entry.key,
+              name: entry.systemRole,
+              systemRole: entry.systemRole,
+              isSystem: true,
+            },
+          });
+          await tx.rolePermission.createMany({
+            data: entry.permissions.map((key) => ({
+              roleId: role.id,
+              permissionId: permissionIdByKey.get(key) as string,
+            })),
+          });
+          createdRoles[entry.systemRole] = { id: role.id };
+        }
+
+        const clientAdminRole = createdRoles.CLIENT_MASTER_ADMIN;
+        if (!clientAdminRole) {
+          throw new Error(
+            'Client Master Admin role was not created - this is a bug, not a validation failure.',
+          );
+        }
+
+        const clientAdmin = await tx.user.create({
+          data: {
+            tenantId: tenant.id,
+            storeId: store.id,
+            roleId: clientAdminRole.id,
+            loginId: input.masterAdmin.loginId,
+            displayName: input.masterAdmin.displayName,
+            email: input.masterAdmin.email ?? null,
+            passwordHash: input.masterAdmin.passwordHash,
+            status: 'ACTIVE',
+          },
+        });
+
+        const license = await tx.license.create({
+          data: {
+            tenantId: tenant.id,
+            planCode: input.license.planCode,
+            licenseKey: `${tenant.code}-${tenant.id.slice(0, 8)}`,
+            expiresAt: input.license.expiresAt,
+            maxUsers: input.license.maxUsers,
+            maxDevices: input.license.maxDevices,
+            maxStores: input.license.maxStores,
+            enabledModules: [...input.license.enabledModules],
+          },
+        });
+
+        return {
+          tenantId: tenant.id,
+          storeId: store.id,
+          clientAdminUserId: clientAdmin.id,
+          licenseId: license.id,
+        };
+      });
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     } catch (err) {
       // Prisma's unique-constraint violation code. Translated to the domain
       // error so the service layer doesn't need to know about Prisma error
@@ -227,6 +343,7 @@ export class PrismaTenantProvisioningRepository implements TenantProvisioningRep
   }
 }
 
+<<<<<<< HEAD
 /**
  * Narrow check for Prisma's P2002 unique-constraint error on a given field, without importing Prisma's error class
  * directly. With driver adapters (PrismaPg) `meta.target` is not always populated, so the constraint's field list,
@@ -248,6 +365,16 @@ function isUniqueConstraintError(err: unknown, field: string): boolean {
   const fromAdapter = e.meta?.driverAdapterError?.cause?.constraint?.fields ?? [];
   const haystack = [...fromTarget, ...fromAdapter, e.message ?? ''];
   return haystack.some((t) => t.toLowerCase().includes(field.toLowerCase()));
+=======
+/** Narrow check for Prisma's P2002 unique-constraint error on a given field, without importing Prisma's error class directly (keeps this file's surface small). */
+function isUniqueConstraintError(err: unknown, field: string): boolean {
+  if (typeof err !== 'object' || err === null) return false;
+  const e = err as { code?: string; meta?: { target?: string[] | string } };
+  if (e.code !== 'P2002') return false;
+  const target = e.meta?.target;
+  const targets = Array.isArray(target) ? target : typeof target === 'string' ? [target] : [];
+  return targets.some((t) => t.toLowerCase().includes(field.toLowerCase()));
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 }
 
 export class PrismaStoreRepository implements StoreRepository {

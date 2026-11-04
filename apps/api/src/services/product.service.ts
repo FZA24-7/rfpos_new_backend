@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import { assertProductAttributesUnlocked } from './admin-guards.js';
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 import { isNonNegativeDecimalString, compareDecimalStrings } from '@mafk/shared';
 import type { CreateProductInput, ProductListQuery, UpdateProductInput } from '@mafk/validation';
 import type {
@@ -141,12 +144,15 @@ export class ProductService {
 
   async update(actor: Actor, id: string, patch: UpdateProductInput): Promise<ProductSummary> {
     const before = await this.requireProduct(id, actor.tenantId);
+<<<<<<< HEAD
     await assertProductAttributesUnlocked(
       this.repos,
       actor.tenantId,
       before as unknown as Record<string, unknown>,
       patch as Record<string, unknown>,
     );
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 
     const categoryId = patch.categoryId ?? before.categoryId;
     const subDepartmentId = patch.subDepartmentId ?? before.subDepartmentId;

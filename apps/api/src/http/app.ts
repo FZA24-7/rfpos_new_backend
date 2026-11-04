@@ -56,11 +56,14 @@ import { purchaseRoutes } from './routes/purchase.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { requestId } from './middleware/request-id.js';
 
+<<<<<<< HEAD
 import type { AdminSecurityService } from '../services/admin-security.service.js';
 import type { AdminOperationsService } from '../services/admin-operations.service.js';
 import { createAdminController } from './controllers/admin.controller.js';
 import { adminRoutes } from './routes/admin.routes.js';
 
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 export interface AppDependencies {
   logger: Logger;
   clientUrl: string;
@@ -94,9 +97,12 @@ export interface AppDependencies {
   expenseService: ExpenseService;
   employeeService: EmployeeService;
   reportService: ReportService;
+<<<<<<< HEAD
   // Administrator module:
   adminSecurityService: AdminSecurityService;
   adminOperationsService: AdminOperationsService;
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 }
 
 export const createApp = (deps: AppDependencies): Express => {
@@ -169,6 +175,7 @@ export const createApp = (deps: AppDependencies): Express => {
     ),
   );
 
+<<<<<<< HEAD
   app.use(
     '/api',
     adminRoutes(
@@ -177,6 +184,8 @@ export const createApp = (deps: AppDependencies): Express => {
     ),
   );
 
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
   app.use(notFoundHandler);
   app.use(errorHandler(deps.logger));
 

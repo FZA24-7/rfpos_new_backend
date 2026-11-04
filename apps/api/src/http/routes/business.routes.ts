@@ -23,11 +23,15 @@ import type {
 } from '../controllers/business.controller.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth } from '../middleware/require-auth.js';
+<<<<<<< HEAD
 import {
   requireAnyPermission,
   requirePermission,
   requireTenant,
 } from '../middleware/require-permission.js';
+=======
+import { requirePermission, requireTenant } from '../middleware/require-permission.js';
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 
 export interface BusinessControllers {
   customers: ReturnType<typeof createCustomerController>;
@@ -123,6 +127,7 @@ export const businessRoutes = (
 
   // Reports (CSV additionally needs reports.export - checked in the controller)
   const range = validate(reportExportQuerySchema, 'query');
+<<<<<<< HEAD
   // `reports.view` (shared roles) opens every report; a per-user grant opens only that one report.
   const view = (key: string) => requireAnyPermission('reports.view', `reports.${key}`);
   router.get('/reports/sales-summary', view('sales_summary'), range, c.reports.salesSummary);
@@ -135,18 +140,39 @@ export const businessRoutes = (
   router.get(
     '/reports/stock-valuation',
     view('stock_valuation'),
+=======
+  const view = requirePermission('reports.view');
+  router.get('/reports/sales-summary', view, range, c.reports.salesSummary);
+  router.get('/reports/daily', view, range, c.reports.daily);
+  router.get('/reports/hourly', view, range, c.reports.hourly);
+  router.get('/reports/top-products', view, range, c.reports.topProducts);
+  router.get('/reports/by-cashier', view, range, c.reports.byCashier);
+  router.get('/reports/by-category', view, range, c.reports.byCategory);
+  router.get('/reports/profit-loss', view, range, c.reports.profitLoss);
+  router.get(
+    '/reports/stock-valuation',
+    view,
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     validate(stockValuationQuerySchema, 'query'),
     c.reports.stockValuation,
   );
   router.get(
     '/reports/receivables',
+<<<<<<< HEAD
     view('receivables'),
+=======
+    view,
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     validate(stockValuationQuerySchema, 'query'),
     c.reports.receivables,
   );
   router.get(
     '/reports/payables',
+<<<<<<< HEAD
     view('payables'),
+=======
+    view,
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     validate(stockValuationQuerySchema, 'query'),
     c.reports.payables,
   );

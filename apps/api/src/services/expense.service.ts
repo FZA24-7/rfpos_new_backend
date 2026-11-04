@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import { assertPeriodOpen } from './admin-guards.js';
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 import { addDaysToYmd, localDateString, startOfLocalDay } from '@mafk/shared';
 import type { CreateExpenseInput, ExpenseListQuery, UpdateExpenseInput } from '@mafk/validation';
 import type { Repositories } from '../domain/ports.js';
@@ -37,7 +40,10 @@ export class ExpenseService {
 
   async create(actor: Actor, input: CreateExpenseInput): Promise<ExpenseView> {
     await this.requireStore(actor.tenantId, input.storeId);
+<<<<<<< HEAD
     await assertPeriodOpen(this.repos, actor.tenantId, input.expenseDate);
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     const tz = await this.tz(actor.tenantId);
     const created = await this.repos.expenses.create({
       tenantId: actor.tenantId,
@@ -78,6 +84,7 @@ export class ExpenseService {
 
   async update(actor: Actor, id: string, patch: UpdateExpenseInput): Promise<ExpenseView> {
     const tz = await this.tz(actor.tenantId);
+<<<<<<< HEAD
     const existing = await this.repos.expenses.findById(id, actor.tenantId);
     if (existing) {
       // Neither the old date nor the new date may fall in a closed period.
@@ -88,6 +95,8 @@ export class ExpenseService {
         ...(patch.expenseDate ? [patch.expenseDate] : []),
       );
     }
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     const updated = await this.repos.expenses.update(
       id,
       actor.tenantId,
@@ -105,11 +114,14 @@ export class ExpenseService {
   }
 
   async delete(actor: Actor, id: string): Promise<void> {
+<<<<<<< HEAD
     const existing = await this.repos.expenses.findById(id, actor.tenantId);
     if (existing) {
       const tz = await this.tz(actor.tenantId);
       await assertPeriodOpen(this.repos, actor.tenantId, localDateString(existing.expenseDate, tz));
     }
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     const ok = await this.repos.expenses.delete(id, actor.tenantId, {
       userId: actor.id,
       action: 'EXPENSE_DELETED',

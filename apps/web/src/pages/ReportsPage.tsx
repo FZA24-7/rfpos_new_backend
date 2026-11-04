@@ -199,6 +199,7 @@ const toTable = (kind: Kind, body: any): Shown => {
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
+<<<<<<< HEAD
 /**
  * `hasPermission` limits the list to the reports the signed-in user may open (everything with `reports.view`,
  * otherwise only the individually granted ones). Omitted = no restriction (the server still enforces it).
@@ -211,6 +212,10 @@ export const ReportsPage = ({ hasPermission }: { hasPermission?: (key: string) =
       )
     : KINDS;
   const [kind, setKind] = useState<Kind>(allowed[0]?.key ?? 'sales-summary');
+=======
+export const ReportsPage = () => {
+  const [kind, setKind] = useState<Kind>('sales-summary');
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
   const [from, setFrom] = useState(day(-29));
   const [to, setTo] = useState(day(0));
   const [shown, setShown] = useState<Shown | null>(null);
@@ -271,7 +276,11 @@ export const ReportsPage = ({ hasPermission }: { hasPermission?: (key: string) =
                   setShown(null);
                 }}
               >
+<<<<<<< HEAD
                 {allowed.map((k) => (
+=======
+                {KINDS.map((k) => (
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
                   <option key={k.key} value={k.key}>
                     {k.label}
                   </option>

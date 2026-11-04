@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "pnpm install --frozen-lockfile --prod=false --filter \"@mafk/api...\"",
+  "buildCommand": "pnpm --filter \"@mafk/api...\" run build",
+  "outputDirectory": "public",
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30,
+      "includeFiles": "{apps/api/dist,packages/*/dist,packages/database/src/generated}/**"
+    }
+  },
+  "rewrites": [{ "source": "/api/:path*", "destination": "/api/index.js" }]
+}

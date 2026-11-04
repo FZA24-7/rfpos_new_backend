@@ -30,7 +30,10 @@ import {
   PrismaEmployeeRepository,
   PrismaExpenseRepository,
 } from './expense-employee-repositories.js';
+<<<<<<< HEAD
 import { PrismaAdminRepository } from './admin-repositories.js';
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 import { PrismaReportRepository } from './report-repositories.js';
 import { PrismaSaleRepository } from './sale-repositories.js';
 import { PrismaPurchaseRepository, PrismaSupplierRepository } from './purchase-repositories.js';
@@ -60,5 +63,8 @@ export const createPrismaRepositories = (prisma: PrismaClient): Repositories => 
   expenses: new PrismaExpenseRepository(prisma),
   employees: new PrismaEmployeeRepository(prisma),
   reports: new PrismaReportRepository(prisma),
+<<<<<<< HEAD
   admin: new PrismaAdminRepository(prisma),
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 });

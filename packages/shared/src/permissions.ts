@@ -49,6 +49,7 @@ export const SPECIAL_PERMISSIONS = [
 const grid = (resources: readonly string[]): string[] =>
   resources.flatMap((r) => ACTIONS.map((a) => `${r}.${a}`));
 
+<<<<<<< HEAD
 /**
  * Administrator forms (Security File, Log File ...). Each gets its own resource so a user can be allowed one of them
  * and not another. Only the four rights the Security File grid offers exist for them (Access/Add/Edit/Delete).
@@ -84,6 +85,8 @@ export const REPORT_PERMISSIONS = [
 const adminGrid = (): string[] =>
   ADMIN_FORM_RESOURCES.flatMap((r) => ADMIN_FORM_ACTIONS.map((a) => `${r}.${a}`));
 
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 export const PLATFORM_PERMISSION_KEYS: readonly string[] = [
   ...grid(PLATFORM_RESOURCES),
   'licenses.manage',
@@ -91,6 +94,7 @@ export const PLATFORM_PERMISSION_KEYS: readonly string[] = [
 
 /** Every permission that exists. Seeded into the `permissions` table. */
 export const PERMISSION_CATALOG: readonly string[] = Array.from(
+<<<<<<< HEAD
   new Set([
     ...grid(TENANT_RESOURCES),
     ...grid(PLATFORM_RESOURCES),
@@ -98,6 +102,9 @@ export const PERMISSION_CATALOG: readonly string[] = Array.from(
     ...adminGrid(),
     ...REPORT_PERMISSIONS,
   ]),
+=======
+  new Set([...grid(TENANT_RESOURCES), ...grid(PLATFORM_RESOURCES), ...SPECIAL_PERMISSIONS]),
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 );
 export type PermissionKey = string;
 

@@ -2,7 +2,11 @@
 // data (the permission catalog). Tenant creation, licenses and the first Client
 // Master Admin are created via the Master Admin API/UI in later phases, not here -
 // per the spec, there must be no hardcoded business data or default tenants.
+<<<<<<< HEAD
 import { isGrantableToTenantRole, PERMISSION_CATALOG } from '@mafk/shared';
+=======
+import { PERMISSION_CATALOG } from '@mafk/shared';
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 import { createPrismaClient } from './client.js';
 import { loadExampleEnv } from './load-example-env.js';
 
@@ -24,6 +28,7 @@ async function main(): Promise<void> {
       });
       if (result) created += 1;
     }
+<<<<<<< HEAD
 
     // Businesses created before a permission existed (for example the Administrator permissions) keep their Client
     // Master Admin role; give it every grantable permission so the owner is never locked out of a new screen. Only the
@@ -48,6 +53,8 @@ async function main(): Promise<void> {
     console.log(
       `Owner roles synced: ${ownerRoles.length} role(s), ${granted} permission(s) added.`,
     );
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     // eslint-disable-next-line no-console -- seed scripts are console-driven CLI tools
     console.log(
       `Seed complete. Permission catalog: ${created}/${PERMISSION_CATALOG.length} entries ensured.`,

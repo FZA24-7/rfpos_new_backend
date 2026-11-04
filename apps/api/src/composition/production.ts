@@ -28,8 +28,11 @@ import { ReportService } from '../services/report.service.js';
 import { SupplierService } from '../services/supplier.service.js';
 import { PurchaseService } from '../services/purchase.service.js';
 import { SaleService } from '../services/sale.service.js';
+<<<<<<< HEAD
 import { AdminSecurityService } from '../services/admin-security.service.js';
 import { AdminOperationsService } from '../services/admin-operations.service.js';
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 import { createApp } from '../http/app.js';
 
 export const buildProductionApp = (env: Env, logger: Logger, poolMax?: number) => {
@@ -98,8 +101,11 @@ export const buildProductionApp = (env: Env, logger: Logger, poolMax?: number) =
     expenseService,
     employeeService,
     reportService,
+<<<<<<< HEAD
     adminSecurityService: new AdminSecurityService(repos, hasher),
     adminOperationsService: new AdminOperationsService(repos),
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
   });
 
   return { app, prisma };

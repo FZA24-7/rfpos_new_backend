@@ -26,8 +26,11 @@ export interface LoginResult {
     loginId: string;
     displayName: string;
     systemRole: string;
+<<<<<<< HEAD
     /** What this user may do. The web app uses it to show only the screens the API will accept. */
     permissions: string[];
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
   };
 }
 
@@ -169,7 +172,10 @@ export class AuthService {
         loginId: user.loginId,
         displayName: user.displayName,
         systemRole: user.systemRole,
+<<<<<<< HEAD
         permissions,
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
       },
     };
   }
@@ -231,14 +237,20 @@ export class AuthService {
         401,
       );
     }
+<<<<<<< HEAD
     const role = await this.repos.roles.findById(user.roleId, user.tenantId);
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     return {
       id: user.id,
       tenantId: user.tenantId,
       loginId: user.loginId,
       displayName: user.displayName,
       systemRole: user.systemRole,
+<<<<<<< HEAD
       permissions: (role?.permissionKeys ?? []).filter((p) => PERMISSION_KEY_SET.has(p)),
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     };
   }
 

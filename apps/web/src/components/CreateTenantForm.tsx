@@ -8,6 +8,7 @@ import { Input, Label } from './ui/Input.js';
 import { Card, CardBody, CardHeader } from './ui/Card.js';
 import { ErrorBanner } from './ui/ErrorBanner.js';
 
+<<<<<<< HEAD
 const TENANT_CODE_RE = /^[A-Z0-9][A-Z0-9-]{1,19}$/;
 const LOGIN_ID_RE = /^[a-z0-9][a-z0-9._-]{2,31}$/;
 
@@ -45,6 +46,8 @@ const validateForm = (f: {
   return null;
 };
 
+=======
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 export const CreateTenantForm = ({
   onCreated,
   onCancel,
@@ -73,6 +76,7 @@ export const CreateTenantForm = ({
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+<<<<<<< HEAD
     const problem = validateForm({
       code,
       name,
@@ -103,6 +107,17 @@ export const CreateTenantForm = ({
         },
         license: {
           planCode: planCode.trim(),
+=======
+    setSubmitting(true);
+    try {
+      const payload: CreateTenantPayload = {
+        code,
+        name,
+        defaultStoreName: storeName,
+        masterAdmin: { loginId: adminLoginId, password: adminPassword, displayName: adminName },
+        license: {
+          planCode,
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
           expiresAt: new Date(expiresAt).toISOString(),
           maxUsers,
           maxDevices,
@@ -113,11 +128,15 @@ export const CreateTenantForm = ({
       await apiRequest('/master/tenants', { method: 'POST', body: payload });
       onCreated();
     } catch (err) {
+<<<<<<< HEAD
       setError(
         err instanceof ApiError
           ? err.message
           : 'Could not reach the server. Check that the API is running and CLIENT_URL matches this page address.',
       );
+=======
+      setError(err instanceof ApiError ? err.message : 'Failed to create client.');
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     } finally {
       setSubmitting(false);
     }
@@ -192,12 +211,18 @@ export const CreateTenantForm = ({
                 type="password"
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
+<<<<<<< HEAD
                 autoComplete="new-password"
                 required
               />
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 At least 10 characters, with a lowercase letter, an uppercase letter and a digit.
               </p>
+=======
+                minLength={10}
+                required
+              />
+>>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
             </div>
           </fieldset>
 
