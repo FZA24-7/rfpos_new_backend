@@ -157,12 +157,9 @@ model Tenant {
   auditLogs         AuditLog[]
   loginIdHistory    LoginIdHistory[]
   documentSequences DocumentSequence[]
-<<<<<<< HEAD
   userCategories    UserCategory[]
   smsLogs           SmsLog[]
   overheadRuns      OverheadRun[]
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 
   @@map("tenants")
 }
@@ -308,7 +305,6 @@ model User {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
-<<<<<<< HEAD
   tenant         Tenant?            @relation(fields: [tenantId], references: [id])
   store          Store?             @relation(fields: [storeId, tenantId], references: [id, tenantId])
   // Plain FK on purpose: a composite (roleId, tenantId) relation cannot join for platform users, whose tenantId is NULL
@@ -320,16 +316,6 @@ model User {
   profile        UserProfile?
   moduleAccess   UserModuleAccess[]
   itemRights     UserItemRight[]
-=======
-  tenant   Tenant? @relation(fields: [tenantId], references: [id])
-  store    Store?  @relation(fields: [storeId, tenantId], references: [id, tenantId])
-  // Plain FK on purpose: a composite (roleId, tenantId) relation cannot join for platform users, whose tenantId is NULL
-  // (the Master Admin would load with role = null). Tenant/role consistency is enforced in provisioning + services.
-  role     Role    @relation(fields: [roleId], references: [id])
-  employee Employee?
-  sessions Session[]
-  loginIdChanges LoginIdHistory[] @relation("LoginIdHistoryUser")
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 
   @@unique([id, tenantId])
   @@index([tenantId, roleId])
@@ -358,7 +344,6 @@ model LoginIdHistory {
 }
 
 model Session {
-<<<<<<< HEAD
   id                       String    @id @default(cuid())
   userId                   String
   tenantId                 String?
@@ -372,21 +357,6 @@ model Session {
   expiresAt                DateTime
   revokedAt                DateTime?
   revokedReason            String?
-=======
-  id                      String    @id @default(cuid())
-  userId                  String
-  tenantId                String?
-  deviceId                String?
-  refreshTokenHash        String    @unique
-  previousRefreshTokenHash String?  @unique
-  userAgent               String?
-  ipAddress               String?
-  createdAt               DateTime  @default(now())
-  lastUsedAt              DateTime  @default(now())
-  expiresAt               DateTime
-  revokedAt               DateTime?
-  revokedReason           String?
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   tenant Tenant? @relation(fields: [tenantId], references: [id])
@@ -460,15 +430,9 @@ model SubDepartment {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-<<<<<<< HEAD
   tenant             Tenant    @relation(fields: [tenantId], references: [id])
   category           Category  @relation(fields: [categoryId, tenantId], references: [id, tenantId])
   products           Product[]
-=======
-  tenant   Tenant    @relation(fields: [tenantId], references: [id])
-  category Category  @relation(fields: [categoryId, tenantId], references: [id, tenantId])
-  products Product[]
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
   productsInCategory Product[] @relation("ProductSubDeptCategory")
 
   @@unique([categoryId, name])
@@ -501,7 +465,6 @@ model Product {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
-<<<<<<< HEAD
   tenant            Tenant        @relation(fields: [tenantId], references: [id])
   category          Category      @relation(fields: [categoryId, tenantId], references: [id, tenantId])
   subDepartment     SubDepartment @relation(fields: [subDepartmentId, tenantId], references: [id, tenantId], map: "products_subdept_tenant_fkey")
@@ -514,20 +477,6 @@ model Product {
   inventoryMoves  InventoryMovement[]
   saleItems       SaleItem[]
   purchaseItems   PurchaseItem[]
-=======
-  tenant        Tenant        @relation(fields: [tenantId], references: [id])
-  category      Category      @relation(fields: [categoryId, tenantId], references: [id, tenantId])
-  subDepartment SubDepartment @relation(fields: [subDepartmentId, tenantId], references: [id, tenantId], map: "products_subdept_tenant_fkey")
-  subDeptInCategory SubDepartment @relation("ProductSubDeptCategory", fields: [subDepartmentId, categoryId], references: [id, categoryId], map: "products_subdept_category_fkey")
-  brand         Brand?        @relation(fields: [brandId, tenantId], references: [id, tenantId])
-  supplier      Supplier?     @relation(fields: [supplierId, tenantId], references: [id, tenantId])
-
-  barcodes       Barcode[]
-  inventories    Inventory[]
-  inventoryMoves InventoryMovement[]
-  saleItems      SaleItem[]
-  purchaseItems  PurchaseItem[]
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
   saleReturnItems SaleReturnItem[]
 
   @@unique([tenantId, sku])
@@ -691,7 +640,6 @@ model SupplierPayment {
 // ───────────────────────────── Sales ─────────────────────────────
 
 model Sale {
-<<<<<<< HEAD
   id                    String     @id @default(cuid())
   tenantId              String
   storeId               String
@@ -718,34 +666,6 @@ model Sale {
   voidReason            String?
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
-=======
-  id                   String     @id @default(cuid())
-  tenantId             String
-  storeId              String
-  invoiceNo            String
-  clientRequestId      String? // idempotency key (double-submit / future offline sync)
-  customerId           String?
-  customerNameSnapshot  String?
-  customerPhoneSnapshot String?
-  cashierId            String
-  deviceId             String?
-  status               SaleStatus @default(COMPLETED)
-  subtotal             Decimal    @db.Decimal(18, 2)
-  itemDiscountTotal    Decimal    @default(0) @db.Decimal(18, 2)
-  cartDiscountPercent  Decimal    @default(0) @db.Decimal(7, 4)
-  cartDiscountAmount   Decimal    @default(0) @db.Decimal(18, 2)
-  taxTotal             Decimal    @default(0) @db.Decimal(18, 2)
-  grandTotal           Decimal    @db.Decimal(18, 2)
-  paidTotal            Decimal    @db.Decimal(18, 2)
-  changeDue            Decimal    @default(0) @db.Decimal(18, 2)
-  notes                String?
-  soldAt               DateTime   @default(now())
-  voidedAt             DateTime?
-  voidedById           String?
-  voidReason           String?
-  createdAt            DateTime   @default(now())
-  updatedAt            DateTime   @updatedAt
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id])
   store    Store     @relation(fields: [storeId, tenantId], references: [id, tenantId])
@@ -766,7 +686,6 @@ model Sale {
 }
 
 model SaleItem {
-<<<<<<< HEAD
   id               String  @id @default(cuid())
   tenantId         String
   saleId           String
@@ -782,23 +701,6 @@ model SaleItem {
   taxRate          Decimal @default(0) @db.Decimal(7, 4)
   taxAmount        Decimal @default(0) @db.Decimal(18, 2)
   lineTotal        Decimal @db.Decimal(18, 2)
-=======
-  id              String  @id @default(cuid())
-  tenantId        String
-  saleId          String
-  productId       String
-  productName     String
-  sku             String
-  quantity        Decimal @db.Decimal(14, 3)
-  returnedQuantity Decimal @default(0) @db.Decimal(14, 3)
-  unitPrice       Decimal @db.Decimal(18, 4)
-  unitCost        Decimal @db.Decimal(18, 4)
-  discountPercent Decimal @default(0) @db.Decimal(7, 4)
-  discountAmount  Decimal @default(0) @db.Decimal(18, 2)
-  taxRate         Decimal @default(0) @db.Decimal(7, 4)
-  taxAmount       Decimal @default(0) @db.Decimal(18, 2)
-  lineTotal       Decimal @db.Decimal(18, 2)
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 
   tenant  Tenant  @relation(fields: [tenantId], references: [id])
   sale    Sale    @relation(fields: [saleId, tenantId], references: [id, tenantId], onDelete: Cascade)
@@ -996,21 +898,12 @@ model Setting {
 }
 
 model DocumentSequence {
-<<<<<<< HEAD
   id        String       @id @default(cuid())
   tenantId  String
   storeId   String?
   type      DocumentType
   prefix    String
   nextValue Int          @default(1)
-=======
-  id       String       @id @default(cuid())
-  tenantId String
-  storeId  String?
-  type     DocumentType
-  prefix   String
-  nextValue Int         @default(1)
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
   store  Store? @relation(fields: [storeId, tenantId], references: [id, tenantId])
@@ -1041,7 +934,6 @@ model AuditLog {
   @@index([action, createdAt])
   @@map("audit_logs")
 }
-<<<<<<< HEAD
 
 // ── Administrator module ─────────────────────────────────────────────────────────────────────────────────────────────
 // Security File: which modules (Checks Approval) and which forms/reports with Access/Add/Edit/Delete a user may use.
@@ -1144,5 +1036,3 @@ model OverheadRun {
   @@index([tenantId, createdAt])
   @@map("overhead_runs")
 }
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3

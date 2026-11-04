@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 import { assertPeriodOpen } from './admin-guards.js';
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 import { compareDecimalStrings } from '@mafk/shared';
 import type {
   CreateCustomerInput,
@@ -95,10 +92,7 @@ export class CustomerService {
     id: string,
     input: CustomerPaymentInput,
   ): Promise<{ payment: CustomerPaymentRecord; balance: string }> {
-<<<<<<< HEAD
     await assertPeriodOpen(this.repos, actor.tenantId, 'today');
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     try {
       return await this.repos.customers.recordPayment({
         tenantId: actor.tenantId,

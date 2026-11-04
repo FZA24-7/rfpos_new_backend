@@ -8,46 +8,6 @@ import { Input, Label } from './ui/Input.js';
 import { Card, CardBody, CardHeader } from './ui/Card.js';
 import { ErrorBanner } from './ui/ErrorBanner.js';
 
-<<<<<<< HEAD
-const TENANT_CODE_RE = /^[A-Z0-9][A-Z0-9-]{1,19}$/;
-const LOGIN_ID_RE = /^[a-z0-9][a-z0-9._-]{2,31}$/;
-
-/** Mirrors the server rules (packages/validation) so the user gets a clear message instead of a failed request. */
-const validateForm = (f: {
-  code: string;
-  name: string;
-  storeName: string;
-  adminLoginId: string;
-  adminName: string;
-  adminPassword: string;
-  planCode: string;
-  expiresAt: string;
-  maxUsers: number;
-  maxDevices: number;
-  maxStores: number;
-}): string | null => {
-  if (!TENANT_CODE_RE.test(f.code.trim().toUpperCase()))
-    return 'Tenant code must be 2-20 characters: letters, numbers or dash (e.g. ACME).';
-  if (f.name.trim().length < 2) return 'Business name must be at least 2 characters.';
-  if (f.storeName.trim().length < 2) return 'Default branch name must be at least 2 characters.';
-  if (!LOGIN_ID_RE.test(f.adminLoginId.trim().toLowerCase()))
-    return 'Login ID must be 3-32 characters: letters, numbers, dot, dash or underscore (no spaces).';
-  if (f.adminName.trim().length < 2) return 'Display name must be at least 2 characters.';
-  const pw = f.adminPassword;
-  if (pw.length < 10 || pw.length > 128)
-    return 'Password must be 10-128 characters and include a lowercase letter, an uppercase letter and a digit.';
-  if (!/[a-z]/.test(pw) || !/[A-Z]/.test(pw) || !/[0-9]/.test(pw))
-    return 'Password must include a lowercase letter, an uppercase letter and a digit.';
-  if (f.planCode.trim().length < 2) return 'Plan code must be at least 2 characters.';
-  if (!f.expiresAt || Number.isNaN(new Date(f.expiresAt).getTime()))
-    return 'Please choose a valid license expiry date.';
-  for (const n of [f.maxUsers, f.maxDevices, f.maxStores])
-    if (!Number.isInteger(n) || n < 1) return 'Max users, devices and branches must be whole numbers of 1 or more.';
-  return null;
-};
-
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 export const CreateTenantForm = ({
   onCreated,
   onCancel,
@@ -76,38 +36,6 @@ export const CreateTenantForm = ({
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-<<<<<<< HEAD
-    const problem = validateForm({
-      code,
-      name,
-      storeName,
-      adminLoginId,
-      adminName,
-      adminPassword,
-      planCode,
-      expiresAt,
-      maxUsers,
-      maxDevices,
-      maxStores,
-    });
-    if (problem) {
-      setError(problem);
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const payload: CreateTenantPayload = {
-        code: code.trim().toUpperCase(),
-        name: name.trim(),
-        defaultStoreName: storeName.trim(),
-        masterAdmin: {
-          loginId: adminLoginId.trim().toLowerCase(),
-          password: adminPassword,
-          displayName: adminName.trim(),
-        },
-        license: {
-          planCode: planCode.trim(),
-=======
     setSubmitting(true);
     try {
       const payload: CreateTenantPayload = {
@@ -117,7 +45,6 @@ export const CreateTenantForm = ({
         masterAdmin: { loginId: adminLoginId, password: adminPassword, displayName: adminName },
         license: {
           planCode,
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
           expiresAt: new Date(expiresAt).toISOString(),
           maxUsers,
           maxDevices,
@@ -128,15 +55,7 @@ export const CreateTenantForm = ({
       await apiRequest('/master/tenants', { method: 'POST', body: payload });
       onCreated();
     } catch (err) {
-<<<<<<< HEAD
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : 'Could not reach the server. Check that the API is running and CLIENT_URL matches this page address.',
-      );
-=======
       setError(err instanceof ApiError ? err.message : 'Failed to create client.');
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     } finally {
       setSubmitting(false);
     }
@@ -211,18 +130,9 @@ export const CreateTenantForm = ({
                 type="password"
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
-<<<<<<< HEAD
-                autoComplete="new-password"
-                required
-              />
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                At least 10 characters, with a lowercase letter, an uppercase letter and a digit.
-              </p>
-=======
                 minLength={10}
                 required
               />
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
             </div>
           </fieldset>
 

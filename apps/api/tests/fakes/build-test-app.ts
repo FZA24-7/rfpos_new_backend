@@ -1,10 +1,7 @@
 import type { Express } from 'express';
 import request from 'supertest';
-<<<<<<< HEAD
 import { AdminSecurityService } from '../../src/services/admin-security.service.js';
 import { AdminOperationsService } from '../../src/services/admin-operations.service.js';
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 import { createApp } from '../../src/http/app.js';
 import { AuthService } from '../../src/services/auth.service.js';
 import { LoginIdService } from '../../src/services/login-id.service.js';
@@ -102,11 +99,8 @@ export const buildTestApp = (scenario: Scenario, trustProxy?: number): Express =
     expenseService,
     employeeService,
     reportService,
-<<<<<<< HEAD
     adminSecurityService: new AdminSecurityService(scenario.repos, testHasher),
     adminOperationsService: new AdminOperationsService(scenario.repos),
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
   });
 };
 

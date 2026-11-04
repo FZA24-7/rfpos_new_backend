@@ -21,12 +21,9 @@ import { EmployeesPage } from './pages/EmployeesPage.js';
 import { ReportsPage } from './pages/ReportsPage.js';
 import { AnalyticsPage } from './pages/AnalyticsPage.js';
 import { apiRequest } from './api/client.js';
-<<<<<<< HEAD
 import { AdministratorPage, ADMIN_VIEW_PERMISSIONS } from './pages/admin/AdministratorPage.js';
 import { can, canAny } from './state/permissions.js';
 import { REPORT_PERMISSIONS } from '@mafk/shared';
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 
 type View =
   | { name: 'dashboard' }
@@ -45,7 +42,6 @@ type View =
   | { name: 'expenses' }
   | { name: 'employees' }
   | { name: 'reports' }
-<<<<<<< HEAD
   | { name: 'analytics' }
   | { name: 'administrator' };
 
@@ -72,34 +68,11 @@ const TENANT_NAV: (NavItem & { any: string[] })[] = [
     any: ['reports.view', ...REPORT_PERMISSIONS],
   },
   { key: 'analytics', label: 'Analytics', any: ['analytics.view'] },
-=======
-  | { name: 'analytics' };
-
-const MASTER_NAV: NavItem[] = [{ key: 'dashboard', label: 'Dashboard' }];
-
-const TENANT_NAV: NavItem[] = [
-  { key: 'categories', label: 'Categories' },
-  { key: 'sub-departments', label: 'Sub-Departments' },
-  { key: 'brands', label: 'Brands' },
-  { key: 'products', label: 'Products' },
-  { key: 'inventory', label: 'Inventory' },
-  { key: 'barcode', label: 'Barcode Lookup' },
-  { key: 'suppliers', label: 'Suppliers' },
-  { key: 'purchases', label: 'Purchases' },
-  { key: 'pos', label: 'POS' },
-  { key: 'sales', label: 'Sales & Refunds' },
-  { key: 'customers', label: 'Customers' },
-  { key: 'expenses', label: 'Expenses' },
-  { key: 'employees', label: 'Employees' },
-  { key: 'reports', label: 'Reports' },
-  { key: 'analytics', label: 'Analytics' },
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 ];
 
 const AuthenticatedApp = () => {
   const { user } = useAuth();
   const isTenantUser = !!user?.tenantId;
-<<<<<<< HEAD
   const tenantNav: NavItem[] = isTenantUser
     ? [
         ...TENANT_NAV.filter((n) => canAny(user, n.any)).map(({ key, label }) => ({ key, label })),
@@ -110,10 +83,6 @@ const AuthenticatedApp = () => {
     : [];
   const [view, setView] = useState<View>(
     isTenantUser ? ({ name: tenantNav[0]?.key ?? 'none' } as View) : { name: 'dashboard' },
-=======
-  const [view, setView] = useState<View>(
-    isTenantUser ? { name: 'categories' } : { name: 'dashboard' },
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
   );
   const [storeId, setStoreId] = useState<string | null>(null);
 
@@ -129,11 +98,7 @@ const AuthenticatedApp = () => {
     })();
   }, [isTenantUser]);
 
-<<<<<<< HEAD
   const nav = isTenantUser ? tenantNav : MASTER_NAV;
-=======
-  const nav = isTenantUser ? TENANT_NAV : MASTER_NAV;
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
   const activeNavKey = view.name === 'tenant' ? 'dashboard' : view.name;
 
   const navigate = (key: string) => {
@@ -201,16 +166,11 @@ const AuthenticatedApp = () => {
       content = <EmployeesPage />;
       break;
     case 'reports':
-<<<<<<< HEAD
       content = <ReportsPage hasPermission={(k) => can(user, k)} />;
-=======
-      content = <ReportsPage />;
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
       break;
     case 'analytics':
       content = <AnalyticsPage />;
       break;
-<<<<<<< HEAD
     case 'administrator':
       content = <AdministratorPage />;
       break;
@@ -220,8 +180,6 @@ const AuthenticatedApp = () => {
           Your account has not been granted access to any module yet. Ask an administrator.
         </p>
       );
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
   }
 
   return (

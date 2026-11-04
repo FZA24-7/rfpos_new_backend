@@ -4,11 +4,8 @@ export interface AuthUser {
   loginId: string;
   displayName: string;
   systemRole: string;
-<<<<<<< HEAD
   /** What the API will accept from this user; the app only shows screens that are in this list. */
   permissions?: string[];
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 }
 
 export interface LoginResponse {

@@ -72,7 +72,6 @@ describe('DEFAULT_ROLE_PERMISSIONS - least privilege shape', () => {
     expect(DEFAULT_ROLE_PERMISSIONS.CLIENT_MASTER_ADMIN).not.toContain('licenses.manage');
   });
 });
-<<<<<<< HEAD
 
 import {
   ADMIN_REGISTRY,
@@ -142,5 +141,3 @@ describe('selectionFromPermissions', () => {
     expect(sel.modules.sort()).toEqual(['MASTER', 'SALE']);
   });
 });
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3

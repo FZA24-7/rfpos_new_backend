@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 import { assertPeriodOpen } from './admin-guards.js';
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 import type { AdjustStockInput, InventoryListQuery, OpeningStockInput } from '@mafk/validation';
 import type { Repositories } from '../domain/ports.js';
 import {
@@ -55,10 +52,7 @@ export class InventoryService {
 
   /** Records the initial quantity for a product at a branch. Does not require `stock.adjust` - setup only. */
   async setOpeningStock(actor: Actor, input: OpeningStockInput): Promise<ApplyMovementResult> {
-<<<<<<< HEAD
     await assertPeriodOpen(this.repos, actor.tenantId, 'today');
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     await this.ensureBelongsToTenant(input.storeId, input.productId, actor.tenantId);
     const result = await this.repos.inventory.applyMovement({
       tenantId: actor.tenantId,
@@ -86,10 +80,7 @@ export class InventoryService {
    * there is no other code path that mutates an Inventory row's quantity.
    */
   async adjustStock(actor: Actor, input: AdjustStockInput): Promise<ApplyMovementResult> {
-<<<<<<< HEAD
     await assertPeriodOpen(this.repos, actor.tenantId, 'today');
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     await this.ensureBelongsToTenant(input.storeId, input.productId, actor.tenantId);
 
     let result: ApplyMovementResult;

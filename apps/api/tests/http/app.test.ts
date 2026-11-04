@@ -13,8 +13,6 @@ describe('GET /api/health', () => {
   });
 });
 
-<<<<<<< HEAD
-=======
 describe('TRUST_PROXY', () => {
   it('uses the forwarded client address only when a proxy count is configured', async () => {
     const scenario = await buildScenario();
@@ -27,7 +25,6 @@ describe('TRUST_PROXY', () => {
   });
 });
 
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 describe('POST /api/auth/login', () => {
   it('returns 200 + access token + refresh cookie on valid credentials', async () => {
     const scenario = await buildScenario();

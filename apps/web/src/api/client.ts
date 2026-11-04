@@ -33,11 +33,7 @@ export const setAccessToken = (token: string | null): void => {
 export const getAccessToken = (): string | null => accessToken;
 
 interface RequestOptions {
-<<<<<<< HEAD
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-=======
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
   body?: unknown;
   skipAuthRetry?: boolean;
 }

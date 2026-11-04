@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 import { assertPeriodOpen } from './admin-guards.js';
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 import {
   addDecimalStrings,
   compareDecimalStrings,
@@ -114,10 +111,7 @@ export class SaleService {
     input: CreateSaleInput,
   ): Promise<{ sale: SaleDetail; replayed: boolean }> {
     await this.requireStore(actor.tenantId, input.storeId);
-<<<<<<< HEAD
     await assertPeriodOpen(this.repos, actor.tenantId, 'today');
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 
     const wantsDiscount =
       hasNonZero(input.discountPercent) ||
@@ -300,10 +294,7 @@ export class SaleService {
     saleId: string,
     input: CreateSaleReturnInput,
   ): Promise<SaleReturnDetail> {
-<<<<<<< HEAD
     await assertPeriodOpen(this.repos, actor.tenantId, 'today');
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     const seen = new Set<string>();
     for (const i of input.items) {
       if (seen.has(i.saleItemId)) {

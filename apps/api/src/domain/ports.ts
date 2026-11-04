@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 import type { AdminRepository } from './admin.js';
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 import type {
   ApplyMovementInput,
   ApplyMovementResult,
@@ -280,11 +277,8 @@ export interface Repositories {
   expenses: ExpenseRepository;
   employees: EmployeeRepository;
   reports: ReportRepository;
-<<<<<<< HEAD
   // Administrator module:
   admin: AdminRepository;
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
 }
 
 export type { PlatformStats } from './types.js';

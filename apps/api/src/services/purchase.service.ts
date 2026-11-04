@@ -1,14 +1,8 @@
-<<<<<<< HEAD
 import { assertPeriodOpen, getTenantTimeZone } from './admin-guards.js';
 import {
   compareDecimalStrings,
   isNonNegativeDecimalString,
   localDateString,
-=======
-import {
-  compareDecimalStrings,
-  isNonNegativeDecimalString,
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
   subtractDecimalStrings,
 } from '@mafk/shared';
 import type {
@@ -126,14 +120,11 @@ export class PurchaseService {
    * separate create-purchase / create-items / apply-inventory calls.
    */
   async recordPurchase(actor: Actor, input: CreatePurchaseInput): Promise<PurchaseDetail> {
-<<<<<<< HEAD
     await assertPeriodOpen(
       this.repos,
       actor.tenantId,
       localDateString(input.purchaseDate, await getTenantTimeZone(this.repos, actor.tenantId)),
     );
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     const supplier = await this.repos.suppliers.findById(input.supplierId, actor.tenantId);
     if (!supplier)
       throw new DomainError('VALIDATION_ERROR', 'Selected supplier does not exist.', 422);
@@ -239,10 +230,7 @@ export class PurchaseService {
     body: RecordPurchasePaymentInputBody,
   ): Promise<PurchaseDetail> {
     await this.requirePurchase(purchaseId, actor.tenantId); // 404 if not in this tenant (IDOR guard)
-<<<<<<< HEAD
     await assertPeriodOpen(this.repos, actor.tenantId, 'today');
-=======
->>>>>>> de44982ecba1541fc115d205eecbf37b454479f3
     if (!isNonNegativeDecimalString(body.amount, 2) || body.amount === '0') {
       throw new DomainError('VALIDATION_ERROR', 'Payment amount must be greater than zero.', 422);
     }
