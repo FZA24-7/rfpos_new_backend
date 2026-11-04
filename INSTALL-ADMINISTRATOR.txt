@@ -1,0 +1,32 @@
+ADMINISTRATOR MODULE - PATCH (only changed/new files, not the whole project)
+=============================================================================
+Apply on top of your current project (the one that already has the Vercel/Supabase patches).
+Paths inside this ZIP match the project folder. cmd.exe commands.
+
+1. Copy files
+   Extract the ZIP and copy everything inside "Administrator-Patch" over your project folder
+   (same paths; choose "Replace" when asked). New files are added; the files that already exist are replaced.
+   Nothing is deleted. No new npm dependency, so "pnpm install" is NOT needed.
+
+2. Regenerate the database client and build the shared libraries
+      pnpm db:generate
+      pnpm --filter @mafk/shared --filter @mafk/validation run build
+
+3. Update the database (Supabase: set DATABASE_URL to your Supabase URL in this cmd window first)
+      pnpm db:migrate:deploy
+      pnpm db:seed
+   The migration only ADDS tables (user_categories, user_profiles, user_module_access,
+   user_item_rights, sms_logs, overhead_runs). It does not change or delete existing data.
+   The seed adds the new permissions and gives each business's owner role all of them.
+   Safe to run again.
+
+4. Redeploy
+   - Backend on Vercel: commit + push (git add -A, git commit, git push) so Vercel redeploys.
+   - Desktop .exe: pnpm --filter @mafk/web run build   then   pnpm desktop:dist
+
+5. Sign out and sign in again, then open the new "Administrator" tab.
+   Open Security File -> Add to create users and tick modules / forms / rights.
+   A user sees only what was ticked for them; the API enforces it.
+
+Checks you can run: pnpm lint, pnpm test (shared, API, web).
+Details and limits: docs/ADMINISTRATOR.md
