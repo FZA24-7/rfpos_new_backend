@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './state/auth.js';
 import { Shell, type NavItem } from './components/Shell.js';
 import { LoginPage } from './LOGIN/index.js';
 import { Spinner } from './components/ui/Spinner.js';
+import { SplashScreen } from './components/SplashScreen.js';
 import { DashboardPage } from './pages/DashboardPage.js';
 import { TenantDetailPage } from './pages/TenantDetailPage.js';
 import { CategoriesPage } from './pages/CategoriesPage.js';
@@ -201,10 +202,24 @@ const AppContent = () => {
   return status === 'authenticated' ? <AuthenticatedApp /> : <LoginPage />;
 };
 
-const App = () => (
-  <AuthProvider>
-    <AppContent />
-  </AuthProvider>
-);
+// The opening animation plays once each time the software is launched (not after signing out).
+let splashPlayed = false;
+
+const App = () => {
+  const [splash, setSplash] = useState(!splashPlayed);
+  return (
+    <AuthProvider>
+      <AppContent />
+      {splash ? (
+        <SplashScreen
+          onDone={() => {
+            splashPlayed = true;
+            setSplash(false);
+          }}
+        />
+      ) : null}
+    </AuthProvider>
+  );
+};
 
 export default App;

@@ -25,8 +25,8 @@ const clientMeta = (req: Request) => ({
 
 export const createAuthController = (authService: AuthService, config: AuthControllerConfig) => ({
   async login(req: Request, res: Response): Promise<void> {
-    const { loginId, password } = req.body as LoginInput;
-    const result = await authService.login(loginId, password, clientMeta(req));
+    const { loginId, password, clientCode } = req.body as LoginInput;
+    const result = await authService.login(loginId, password, clientMeta(req), clientCode);
     res.cookie(REFRESH_COOKIE_NAME, result.refreshToken, refreshCookieOptions(config));
     res.status(200).json({ accessToken: result.accessToken, user: result.user });
   },

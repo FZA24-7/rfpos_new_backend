@@ -38,7 +38,9 @@ export const Shell = ({
             <p className="text-sm font-semibold text-slate-900 dark:text-white">
               MAFK Retail-Flow POS
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Master Admin</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {user?.client ? `${user.client.name} (${user.client.code})` : 'Master Admin'}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             {user ? (

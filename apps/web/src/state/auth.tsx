@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react';
 import { apiRequest, refreshAccessToken, setAccessToken } from '../api/client.js';
 import type { AuthUser, LoginResponse } from '../api/types.js';
+import { rememberClient } from './clientIdentity.js';
 
 interface AuthState {
   user: AuthUser | null;
@@ -11,7 +12,7 @@ interface AuthState {
    */
   status: 'restoring' | 'authenticated' | 'unauthenticated';
   /** Throws the `ApiError` (or network error) on failure - the LOGIN form turns it into a message. */
-  login: (loginId: string, password: string) => Promise<void>;
+  login: (loginId: string, password: string, clientCode?: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -34,6 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!(await refreshAccessToken())) throw new Error('no session');
         const res = await apiRequest<{ user: AuthUser }>('/auth/me', { skipAuthRetry: true });
         if (cancelled) return;
+        if (res.user.client) rememberClient(res.user.client);
         setUser(res.user);
         setStatus('authenticated');
       } catch {
@@ -46,12 +48,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const login = useCallback(async (loginId: string, password: string) => {
+  const login = useCallback(async (loginId: string, password: string, clientCode?: string) => {
+    const code = clientCode?.trim();
     const res = await apiRequest<LoginResponse>('/auth/login', {
       method: 'POST',
-      body: { loginId, password },
+      body: code ? { loginId, password, clientCode: code } : { loginId, password },
       skipAuthRetry: true,
     });
+    if (res.user.client) rememberClient(res.user.client);
     setAccessToken(res.accessToken);
     setUser(res.user);
     setStatus('authenticated');

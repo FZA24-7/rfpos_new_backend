@@ -12,18 +12,17 @@ async function main(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error('DATABASE_URL is required to seed.');
 
-  const prisma = createPrismaClient({ databaseUrl });
+  const prisma = createPrismaClient({ databaseUrl, poolMax: 1 });
   try {
-    let created = 0;
-    for (const key of PERMISSION_CATALOG) {
+    // Bulk statements (a handful of round trips) instead of one upsert per permission: over a remote pooler such as
+    // Supabase's, hundreds of tiny round trips are slow and the connection can be dropped part-way.
+    const wanted = PERMISSION_CATALOG.map((key) => {
       const [resource, action] = key.split('.');
-      const result = await prisma.permission.upsert({
-        where: { key },
-        create: { key, resource: resource ?? key, action: action ?? 'view' },
-        update: {},
-      });
-      if (result) created += 1;
-    }
+      return { key, resource: resource ?? key, action: action ?? 'view' };
+    });
+    const before = await prisma.permission.count();
+    await prisma.permission.createMany({ data: wanted, skipDuplicates: true });
+    const added = (await prisma.permission.count()) - before;
 
     // Businesses created before a permission existed (for example the Administrator permissions) keep their Client
     // Master Admin role; give it every grantable permission so the owner is never locked out of a new screen. Only the
@@ -50,14 +49,28 @@ async function main(): Promise<void> {
     );
     // eslint-disable-next-line no-console -- seed scripts are console-driven CLI tools
     console.log(
-      `Seed complete. Permission catalog: ${created}/${PERMISSION_CATALOG.length} entries ensured.`,
+      `Seed complete. Permission catalog: ${PERMISSION_CATALOG.length} entries ensured (${added} new).`,
     );
   } finally {
     await prisma.$disconnect();
   }
 }
 
-main().catch((err) => {
+/** A dropped connection is retried (the seed is idempotent, so running it again is safe). */
+async function run(): Promise<void> {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      await main();
+      return;
+    } catch (err) {
+      if (attempt >= 3 || !String(err).includes('Connection terminated')) throw err;
+      // eslint-disable-next-line no-console -- seed scripts are console-driven CLI tools
+      console.log(`Connection dropped, retrying (${attempt}/2)...`);
+    }
+  }
+}
+
+run().catch((err) => {
   console.error(err);
   process.exit(1);
 });

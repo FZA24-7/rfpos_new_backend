@@ -10,10 +10,15 @@ import type { LoginFieldErrors } from './loginValidation.js';
 
 export interface LoginFormProps {
   /** Performs the sign-in. Must reject on failure; the form shows the reason. */
-  onSubmit: (loginId: string, password: string) => Promise<void>;
+  onSubmit: (loginId: string, password: string, clientCode?: string) => Promise<void>;
+  /** Called as the Client field changes so the page can show the brand name. */
+  onClientChange?: (code: string) => void;
+  /** Client code remembered on this computer. */
+  initialClientCode?: string;
 }
 
-export const LoginForm = ({ onSubmit }: LoginFormProps) => {
+export const LoginForm = ({ onSubmit, onClientChange, initialClientCode = '' }: LoginFormProps) => {
+  const [clientCode, setClientCode] = useState(initialClientCode);
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -21,6 +26,7 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const inFlight = useRef(false); // blocks double submits (Enter + click) even before state re-renders
+  const clientRef = useRef<HTMLInputElement>(null);
   const loginIdRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const refocusPassword = useRef(false);
@@ -38,9 +44,13 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
     e.preventDefault();
     if (inFlight.current) return;
 
-    const errors = validateLoginForm(loginId, password);
+    const errors = validateLoginForm(loginId, password, clientCode);
     setFieldErrors(errors);
     setFormError(null);
+    if (errors.clientCode) {
+      clientRef.current?.focus();
+      return;
+    }
     if (errors.loginId) {
       loginIdRef.current?.focus();
       return;
@@ -53,7 +63,7 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
     inFlight.current = true;
     setSubmitting(true);
     try {
-      await onSubmit(loginId.trim(), password);
+      await onSubmit(loginId.trim(), password, clientCode.trim() || undefined);
       // Success: the app swaps this page for the signed-in shell; nothing to do here.
     } catch (err) {
       setFormError(describeLoginError(err));
@@ -70,6 +80,33 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
       {formError ? <ErrorBanner message={formError} /> : null}
 
       <div>
+        <Label htmlFor="clientCode">Client</Label>
+        <Input
+          id="clientCode"
+          ref={clientRef}
+          autoCapitalize="characters"
+          autoCorrect="off"
+          spellCheck={false}
+          placeholder="e.g. MTJ"
+          autoFocus={!initialClientCode}
+          className="uppercase"
+          value={clientCode}
+          onChange={(e) => {
+            setClientCode(e.target.value);
+            onClientChange?.(e.target.value);
+          }}
+          aria-invalid={fieldErrors.clientCode ? true : undefined}
+          aria-describedby={fieldErrors.clientCode ? 'clientCode-error' : undefined}
+          disabled={submitting}
+        />
+        {fieldErrors.clientCode ? (
+          <p id="clientCode-error" className="mt-1 text-xs text-red-600 dark:text-red-400">
+            {fieldErrors.clientCode}
+          </p>
+        ) : null}
+      </div>
+
+      <div>
         <Label htmlFor="loginId">Login ID</Label>
         <Input
           id="loginId"
@@ -78,7 +115,7 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck={false}
-          autoFocus
+          autoFocus={Boolean(initialClientCode)}
           value={loginId}
           onChange={(e) => setLoginId(e.target.value)}
           aria-invalid={fieldErrors.loginId ? true : undefined}

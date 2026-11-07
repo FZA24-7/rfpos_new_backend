@@ -20,6 +20,13 @@ export const passwordSchema = z
 export const loginSchema = z.object({
   loginId: z.string().trim().min(1).max(64),
   password: z.string().min(1).max(128),
+  /** Client (brand) code shown on the sign-in screen, e.g. MTJ. Optional; when present the account must belong to it. */
+  clientCode: z
+    .string()
+    .trim()
+    .max(20)
+    .optional()
+    .transform((v) => (v ? v.toUpperCase() : undefined)),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 

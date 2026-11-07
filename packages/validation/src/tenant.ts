@@ -5,7 +5,10 @@ export const tenantCodeSchema = z
   .string()
   .trim()
   .toUpperCase()
-  .regex(/^[A-Z0-9][A-Z0-9-]{1,19}$/, 'Tenant code must be 2-20 chars, letters/numbers/dash');
+  .regex(
+    /^[A-Z0-9][A-Z0-9.-]{0,19}$/,
+    'Client code must be 1-20 chars: letters, numbers, dot, dash',
+  );
 
 export const createTenantSchema = z.object({
   code: tenantCodeSchema,

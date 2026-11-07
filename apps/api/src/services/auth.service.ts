@@ -28,6 +28,8 @@ export interface LoginResult {
     systemRole: string;
     /** What this user may do. The web app uses it to show only the screens the API will accept. */
     permissions: string[];
+    /** The business (brand) this user belongs to; null for the platform Master Admin. Shown by the app at sign-in. */
+    client: { code: string; name: string } | null;
   };
 }
 
@@ -42,7 +44,12 @@ export class AuthService {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  async login(loginIdRaw: string, password: string, meta: RequestMeta): Promise<LoginResult> {
+  async login(
+    loginIdRaw: string,
+    password: string,
+    meta: RequestMeta,
+    clientCodeRaw?: string,
+  ): Promise<LoginResult> {
     const loginId = normalizeLoginId(loginIdRaw);
     const recentFailures = await this.repos.loginAttempts.countRecentFailures(
       loginId,
@@ -104,7 +111,13 @@ export class AuthService {
       }
     }
 
-    const passwordOk = await this.hasher.verify(user.passwordHash, password);
+    // When the sign-in screen names a client (for example MTJ), the account must belong to exactly that client. A
+    // mismatch looks identical to a wrong password so the response never says which clients or Login IDs exist.
+    const clientCode = clientCodeRaw?.trim().toUpperCase();
+    const client = await this.clientOf(user.tenantId);
+    const clientMismatch = clientCode ? client?.code !== clientCode : false;
+
+    const passwordOk = !clientMismatch && (await this.hasher.verify(user.passwordHash, password));
     if (!passwordOk) {
       await this.repos.loginAttempts.record({
         loginId,
@@ -170,8 +183,15 @@ export class AuthService {
         displayName: user.displayName,
         systemRole: user.systemRole,
         permissions,
+        client,
       },
     };
+  }
+
+  private async clientOf(tenantId: string | null): Promise<{ code: string; name: string } | null> {
+    if (!tenantId) return null;
+    const tenant = await this.repos.tenants.findById(tenantId);
+    return tenant ? { code: tenant.code, name: tenant.name } : null;
   }
 
   async refresh(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
@@ -239,6 +259,7 @@ export class AuthService {
       displayName: user.displayName,
       systemRole: user.systemRole,
       permissions: (role?.permissionKeys ?? []).filter((p) => PERMISSION_KEY_SET.has(p)),
+      client: await this.clientOf(user.tenantId),
     };
   }
 

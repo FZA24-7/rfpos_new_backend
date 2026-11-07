@@ -1,0 +1,31 @@
+CLIENT ACCESS + OPENING ANIMATION - PATCH (only changed/new files)
+==================================================================
+Apply on top of your current project (the one with the Administrator module). cmd.exe / PowerShell commands.
+
+1. Copy files
+   Extract the ZIP and copy everything inside "Client-Access-Patch" over your project folder
+   (same paths, choose "Replace"). No new dependency, no database change.
+
+2. Rebuild the shared libraries
+      pnpm --filter @mafk/shared --filter @mafk/validation run build
+
+3. Backend (Vercel)
+      git add -A
+      git commit -m "Client access and opening animation"
+      git push
+   Wait until the Vercel deployment is green.
+
+4. Desktop app
+      pnpm --filter @mafk/web run build
+      pnpm desktop:dist
+   Close the old app completely and run the NEW build.
+
+5. Use it
+   - Opening: the logo animation plays, then the sign-in screen.
+   - Sign-in has: Client (e.g. MTJ), Login ID, Password. The client is remembered on the PC and shown large.
+   - Master Admin: leave Client empty.
+   - Create clients (MTJ, J.) from the Master Admin screen as before; client codes may now contain a dot.
+   - Each client's staff are created in Administrator -> Security File of that client.
+
+Checks you can run: pnpm lint, pnpm test.
+Details: docs/CLIENT-ACCESS.md

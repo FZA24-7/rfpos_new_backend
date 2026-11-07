@@ -6,6 +6,8 @@ export interface AuthUser {
   systemRole: string;
   /** What the API will accept from this user; the app only shows screens that are in this list. */
   permissions?: string[];
+  /** The client (brand) this account belongs to; null for the platform Master Admin. */
+  client?: { code: string; name: string } | null;
 }
 
 export interface LoginResponse {
