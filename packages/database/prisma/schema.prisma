@@ -145,6 +145,7 @@ model Tenant {
   suppliers         Supplier[]
   supplierPayments  SupplierPayment[]
   sales             Sale[]
+  vouchers          Voucher[]
   saleItems         SaleItem[]
   payments          Payment[]
   saleReturns       SaleReturn[]
@@ -660,6 +661,15 @@ model Sale {
   paidTotal             Decimal    @db.Decimal(18, 2)
   changeDue             Decimal    @default(0) @db.Decimal(18, 2)
   notes                 String?
+  // POS extras (reference POS screen): document references, charges on top of the lines, rounding, redeemed vouchers.
+  orderRef              String?
+  fbrInvoiceNo          String?
+  creditNoteRef         String?
+  serviceFee            Decimal    @default(0) @db.Decimal(18, 2)
+  otherCharges          Decimal    @default(0) @db.Decimal(18, 2)
+  roundingAmount        Decimal    @default(0) @db.Decimal(18, 2)
+  voucherAmount         Decimal    @default(0) @db.Decimal(18, 2)
+  voucherRefs           String?
   soldAt                DateTime   @default(now())
   voidedAt              DateTime?
   voidedById            String?
@@ -701,6 +711,7 @@ model SaleItem {
   taxRate          Decimal @default(0) @db.Decimal(7, 4)
   taxAmount        Decimal @default(0) @db.Decimal(18, 2)
   lineTotal        Decimal @db.Decimal(18, 2)
+  salesman         String?
 
   tenant  Tenant  @relation(fields: [tenantId], references: [id])
   sale    Sale    @relation(fields: [saleId, tenantId], references: [id, tenantId], onDelete: Cascade)
@@ -1035,4 +1046,40 @@ model OverheadRun {
 
   @@index([tenantId, createdAt])
   @@map("overhead_runs")
+}
+
+// ───────────────────────────── Vouchers ─────────────────────────────
+
+enum VoucherKind {
+  DISCOUNT
+  CREDIT_MEMO
+}
+
+enum VoucherStatus {
+  ACTIVE
+  USED
+  CANCELLED
+}
+
+/// A discount voucher or a credit memo: a code worth `balance`, redeemed (fully or partly) against a sale.
+model Voucher {
+  id          String        @id @default(cuid())
+  tenantId    String
+  code        String
+  kind        VoucherKind
+  amount      Decimal       @db.Decimal(18, 2)
+  balance     Decimal       @db.Decimal(18, 2)
+  status      VoucherStatus @default(ACTIVE)
+  expiresAt   DateTime?
+  note        String?
+  issuedById  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, code])
+  @@unique([id, tenantId])
+  @@index([tenantId, kind, status])
+  @@map("vouchers")
 }

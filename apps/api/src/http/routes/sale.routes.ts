@@ -3,6 +3,9 @@ import {
   createSaleReturnSchema,
   createSaleSchema,
   idParamSchema,
+  issueVoucherSchema,
+  voucherCodeParamSchema,
+  voucherListQuerySchema,
   posProductSearchSchema,
   receiptQuerySchema,
   saleListQuerySchema,
@@ -21,9 +24,34 @@ export const saleRoutes = (
 ): Router => {
   const router = Router();
   // Scoped per prefix (see master-admin.routes.ts: an unscoped router.use would guard every later router).
-  for (const prefix of ['/pos', '/sales', '/sale-returns']) {
+  for (const prefix of ['/pos', '/sales', '/sale-returns', '/vouchers']) {
     router.use(prefix, requireAuth(accessTokens), requireTenant);
   }
+
+  router.get(
+    '/vouchers',
+    requirePermission('sales.view'),
+    validate(voucherListQuerySchema, 'query'),
+    controller.listVouchers,
+  );
+  router.post(
+    '/vouchers',
+    requirePermission('discount.apply'),
+    validate(issueVoucherSchema),
+    controller.issueVoucher,
+  );
+  router.get(
+    '/vouchers/:code',
+    requirePermission('pos.view'),
+    validate(voucherCodeParamSchema, 'params'),
+    controller.getVoucher,
+  );
+  router.post(
+    '/vouchers/:code/cancel',
+    requirePermission('discount.apply'),
+    validate(voucherCodeParamSchema, 'params'),
+    controller.cancelVoucher,
+  );
 
   router.get(
     '/pos/products',

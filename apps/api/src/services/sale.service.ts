@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { assertPeriodOpen } from './admin-guards.js';
 import {
   addDecimalStrings,
@@ -10,6 +11,8 @@ import {
 import type {
   CreateSaleInput,
   CreateSaleReturnInput,
+  IssueVoucherInput,
+  VoucherListQuery,
   PosProductSearchQuery,
   ReceiptFormat,
   SaleListQuery,
@@ -23,12 +26,14 @@ import {
   ReturnNotAllowedError,
   SaleConcurrencyError,
   SaleNotFoundError,
+  VoucherRedeemError,
   type ProductSummary,
   type ReceiptDocument,
   type RecordSaleInput,
   type SaleDetail,
   type SaleListResult,
   type SaleReturnDetail,
+  type VoucherRecord,
 } from '../domain/types.js';
 import type { Actor } from './category.service.js';
 import {
@@ -169,6 +174,48 @@ export class SaleService {
     }
     const { lines, totals } = computed;
 
+    // Charges, vouchers and rounding sit on top of the item lines (refunds still return item values only).
+    const serviceFee = roundDecimalString(input.serviceFee ?? '0', 2);
+    const otherCharges = roundDecimalString(input.otherCharges ?? '0', 2);
+    let payable = addDecimalStrings(
+      addDecimalStrings(totals.grandTotal, serviceFee, 2),
+      otherCharges,
+      2,
+    );
+    const redeem: { code: string; amount: string }[] = [];
+    let voucherAmount = '0.00';
+    const now = Date.now();
+    for (const [code, kind] of [
+      [input.discountVoucherCode, 'DISCOUNT'],
+      [input.creditMemoCode, 'CREDIT_MEMO'],
+    ] as const) {
+      if (!code) continue;
+      const v = await this.repos.vouchers.findByCode(actor.tenantId, code);
+      const label = kind === 'DISCOUNT' ? 'Discount voucher' : 'Credit memo';
+      if (!v || v.kind !== kind) {
+        throw new DomainError('VOUCHER_INVALID', `${label} ${code} was not found.`, 422);
+      }
+      if (v.status !== 'ACTIVE' || (v.expiresAt && v.expiresAt.getTime() <= now)) {
+        throw new DomainError(
+          'VOUCHER_INVALID',
+          `${label} ${code} is expired or already used.`,
+          422,
+        );
+      }
+      const use = compareDecimalStrings(v.balance, payable, 2) < 0 ? v.balance : payable;
+      if (compareDecimalStrings(use, '0', 2) <= 0) continue;
+      redeem.push({ code, amount: use });
+      voucherAmount = addDecimalStrings(voucherAmount, use, 2);
+      payable = subtractDecimalStrings(payable, use, 2);
+    }
+    let roundingAmount = '0.00';
+    if (input.roundToWhole) {
+      roundingAmount = subtractDecimalStrings(roundDecimalString(payable, 0), payable, 2);
+    }
+    const grandTotal = addDecimalStrings(payable, roundingAmount, 2);
+    const voucherRefs =
+      redeem.length > 0 ? redeem.map((r) => `${r.code}:${r.amount}`).join(',') : null;
+
     // Tender: must cover the total; any excess (change) must be returnable out of cash.
     let paid = '0.00';
     let cash = '0.00';
@@ -191,7 +238,7 @@ export class SaleService {
         throw new DomainError('VALIDATION_ERROR', 'A sale on account needs a customer.', 422);
       }
       const nonCredit = subtractDecimalStrings(paid, credit, 2);
-      const maxCredit = subtractDecimalStrings(totals.grandTotal, nonCredit, 2);
+      const maxCredit = subtractDecimalStrings(grandTotal, nonCredit, 2);
       if (maxCredit.startsWith('-') || compareDecimalStrings(credit, maxCredit, 2) > 0) {
         throw new DomainError(
           'VALIDATION_ERROR',
@@ -200,14 +247,14 @@ export class SaleService {
         );
       }
     }
-    if (compareDecimalStrings(paid, totals.grandTotal, 2) < 0) {
+    if (compareDecimalStrings(paid, grandTotal, 2) < 0) {
       throw new DomainError(
         'PAYMENT_INSUFFICIENT',
-        `Payments (${paid}) do not cover the total (${totals.grandTotal}).`,
+        `Payments (${paid}) do not cover the total (${grandTotal}).`,
         422,
       );
     }
-    const changeDue = subtractDecimalStrings(paid, totals.grandTotal, 2);
+    const changeDue = subtractDecimalStrings(paid, grandTotal, 2);
     if (compareDecimalStrings(changeDue, cash, 2) > 0) {
       throw new DomainError(
         'VALIDATION_ERROR',
@@ -232,13 +279,14 @@ export class SaleService {
         taxRate: lines[i]!.taxRate,
         taxAmount: lines[i]!.taxAmount,
         lineTotal: lines[i]!.lineTotal,
+        salesman: item.salesman || undefined,
       })),
       subtotal: totals.subtotal,
       itemDiscountTotal: totals.itemDiscountTotal,
       cartDiscountPercent: totals.cartDiscountPercent,
       cartDiscountAmount: totals.cartDiscountAmount,
       taxTotal: totals.taxTotal,
-      grandTotal: totals.grandTotal,
+      grandTotal,
       payments: input.payments.map((p) => ({
         method: p.method,
         amount: roundDecimalString(p.amount, 2),
@@ -250,6 +298,17 @@ export class SaleService {
       customerName,
       customerPhone,
       notes: input.notes,
+      extras: {
+        orderRef: input.orderRef || null,
+        fbrInvoiceNo: input.fbrInvoiceNo || null,
+        creditNoteRef: input.creditNoteRef || null,
+        serviceFee,
+        otherCharges,
+        roundingAmount,
+        voucherAmount,
+        voucherRefs,
+      },
+      redeem,
       audit: {
         userId: actor.id,
         action: 'SALE_RECORDED',
@@ -276,7 +335,81 @@ export class SaleService {
       return new DomainError('CREDIT_LIMIT_EXCEEDED', err.message, 409);
     if (err instanceof SaleConcurrencyError) return new DomainError('CONFLICT', err.message, 409);
     if (err instanceof SaleMathError) return new DomainError('VALIDATION_ERROR', err.message, 422);
+    if (err instanceof VoucherRedeemError)
+      return new DomainError('VOUCHER_INVALID', err.message, 409);
     return err;
+  }
+
+  // ───────── Vouchers & credit memos ─────────
+
+  private newVoucherCode(kind: 'DISCOUNT' | 'CREDIT_MEMO'): string {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const bytes = randomBytes(8);
+    let out = kind === 'DISCOUNT' ? 'DV-' : 'CM-';
+    for (const b of bytes) out += alphabet[b % alphabet.length];
+    return out;
+  }
+
+  async issueVoucher(actor: SaleActor, input: IssueVoucherInput): Promise<VoucherRecord> {
+    if (input.expiresAt && input.expiresAt.getTime() <= Date.now()) {
+      throw new DomainError('VALIDATION_ERROR', 'The expiry date must be in the future.', 422);
+    }
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const code = input.code ?? this.newVoucherCode(input.kind);
+      try {
+        const v = await this.repos.vouchers.issue({
+          tenantId: actor.tenantId,
+          code,
+          kind: input.kind,
+          amount: roundDecimalString(input.amount, 2),
+          ...(input.expiresAt ? { expiresAt: input.expiresAt } : {}),
+          ...(input.note ? { note: input.note } : {}),
+          issuedById: actor.id,
+        });
+        await this.repos.auditLogs.record({
+          tenantId: actor.tenantId,
+          userId: actor.id,
+          action: 'VOUCHER_ISSUED',
+          entity: 'Voucher',
+          entityId: v.id,
+          metadata: { code: v.code, kind: v.kind, amount: v.amount },
+        });
+        return v;
+      } catch (err) {
+        const dup = (err as { code?: string }).code === 'P2002';
+        if (!dup) throw err;
+        if (input.code) {
+          throw new DomainError('VOUCHER_EXISTS', `Code ${input.code} is already in use.`, 409);
+        }
+      }
+    }
+    throw new DomainError('CONFLICT', 'Could not generate a unique code. Try again.', 409);
+  }
+
+  async getVoucher(tenantId: string, code: string): Promise<VoucherRecord> {
+    const v = await this.repos.vouchers.findByCode(tenantId, code);
+    if (!v) throw new DomainError('NOT_FOUND', 'Voucher not found.', 404);
+    return v;
+  }
+
+  listVouchers(tenantId: string, q: VoucherListQuery) {
+    return this.repos.vouchers.list(tenantId, q);
+  }
+
+  async cancelVoucher(actor: SaleActor, code: string): Promise<VoucherRecord> {
+    const v = await this.repos.vouchers.cancel(actor.tenantId, code);
+    if (!v) {
+      throw new DomainError('VOUCHER_INVALID', 'Only an active voucher can be cancelled.', 409);
+    }
+    await this.repos.auditLogs.record({
+      tenantId: actor.tenantId,
+      userId: actor.id,
+      action: 'VOUCHER_CANCELLED',
+      entity: 'Voucher',
+      entityId: v.id,
+      metadata: { code: v.code },
+    });
+    return v;
   }
 
   async getById(id: string, tenantId: string): Promise<SaleDetail> {

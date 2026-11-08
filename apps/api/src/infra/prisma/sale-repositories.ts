@@ -26,6 +26,7 @@ import { formatQuantity, formatRate, formatUnitPrice } from '../../services/form
 import { planReturn } from '../../services/return-planner.js';
 import { applyMovementInTx } from './inventory-ops.js';
 import { customerBalance } from './customer-repositories.js';
+import { redeemVoucherInTx } from './voucher-repositories.js';
 
 const money = (d: Prisma.Decimal): string => d.toFixed(2);
 
@@ -89,6 +90,14 @@ const toSaleDetail = (row: SaleRow): SaleDetail => ({
   cartDiscountAmount: money(row.cartDiscountAmount),
   taxTotal: money(row.taxTotal),
   notes: row.notes,
+  orderRef: row.orderRef,
+  fbrInvoiceNo: row.fbrInvoiceNo,
+  creditNoteRef: row.creditNoteRef,
+  serviceFee: money(row.serviceFee),
+  otherCharges: money(row.otherCharges),
+  roundingAmount: money(row.roundingAmount),
+  voucherAmount: money(row.voucherAmount),
+  voucherRefs: row.voucherRefs,
   soldAt: row.soldAt,
   items: row.items.map((i) => ({
     id: i.id,
@@ -103,6 +112,7 @@ const toSaleDetail = (row: SaleRow): SaleDetail => ({
     taxRate: formatRate(i.taxRate.toFixed(4)),
     taxAmount: money(i.taxAmount),
     lineTotal: money(i.lineTotal),
+    salesman: i.salesman ?? undefined,
   })),
   payments: row.payments.map((p) => ({
     id: p.id,
@@ -316,6 +326,14 @@ export class PrismaSaleRepository implements SaleRepository {
               paidTotal: input.paidTotal,
               changeDue: input.changeDue,
               notes: input.notes ?? null,
+              orderRef: input.extras.orderRef,
+              fbrInvoiceNo: input.extras.fbrInvoiceNo,
+              creditNoteRef: input.extras.creditNoteRef,
+              serviceFee: input.extras.serviceFee,
+              otherCharges: input.extras.otherCharges,
+              roundingAmount: input.extras.roundingAmount,
+              voucherAmount: input.extras.voucherAmount,
+              voucherRefs: input.extras.voucherRefs,
               // tenantId is not set on nested rows: it comes from the parent through the composite FK.
               items: {
                 create: input.items.map((i) => ({
@@ -330,6 +348,7 @@ export class PrismaSaleRepository implements SaleRepository {
                   taxRate: i.taxRate,
                   taxAmount: i.taxAmount,
                   lineTotal: i.lineTotal,
+                  salesman: i.salesman ?? null,
                 })),
               },
               payments: {
@@ -341,6 +360,10 @@ export class PrismaSaleRepository implements SaleRepository {
               },
             },
           });
+
+          for (const r of input.redeem) {
+            await redeemVoucherInTx(tx, input.tenantId, r.code, r.amount);
+          }
 
           for (const item of input.items) {
             await applyMovementInTx(tx, {

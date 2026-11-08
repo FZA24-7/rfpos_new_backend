@@ -86,13 +86,15 @@ const AuthenticatedApp = () => {
     isTenantUser ? ({ name: tenantNav[0]?.key ?? 'none' } as View) : { name: 'dashboard' },
   );
   const [storeId, setStoreId] = useState<string | null>(null);
+  const [storeName, setStoreName] = useState('');
 
   useEffect(() => {
     if (!isTenantUser) return;
     void (async () => {
       try {
-        const stores = await apiRequest<{ id: string }[]>('/stores');
+        const stores = await apiRequest<{ id: string; name?: string }[]>('/stores');
         setStoreId(stores[0]?.id ?? null);
+        setStoreName(stores[0]?.name ?? '');
       } catch {
         setStoreId(null);
       }
@@ -149,7 +151,14 @@ const AuthenticatedApp = () => {
       break;
     case 'pos':
       content = storeId ? (
-        <PosPage storeId={storeId} />
+        <PosPage
+          storeId={storeId}
+          storeName={storeName}
+          canChangePrice={canAny(user, ['price.change'])}
+          canRefund={canAny(user, ['sale.refund'])}
+          canViewBills={canAny(user, ['sales.view'])}
+          canIssueVoucher={canAny(user, ['discount.apply'])}
+        />
       ) : (
         <p className="text-sm text-slate-500 dark:text-slate-400">Loading branch…</p>
       );

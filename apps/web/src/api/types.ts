@@ -315,6 +315,7 @@ export interface SaleItemRecord {
   taxRate: string;
   taxAmount: string;
   lineTotal: string;
+  salesman?: string | undefined;
 }
 
 export interface SaleReturnItemRecord {
@@ -358,6 +359,14 @@ export interface SaleDetail extends SaleSummary {
   cartDiscountAmount: string;
   taxTotal: string;
   notes: string | null;
+  orderRef?: string | null;
+  fbrInvoiceNo?: string | null;
+  creditNoteRef?: string | null;
+  serviceFee?: string;
+  otherCharges?: string;
+  roundingAmount?: string;
+  voucherAmount?: string;
+  voucherRefs?: string | null;
   items: SaleItemRecord[];
   payments: { id: string; method: TenderMethod; amount: string; reference: string | null }[];
   returns: SaleReturnDetail[];
@@ -521,4 +530,23 @@ export interface AnalyticsOverview {
   hourly: HourlyPoint[];
   topProducts: ProductPerformance[];
   byCategory: { categoryId: string; categoryName: string; quantitySold: string; revenue: string }[];
+}
+
+export interface VoucherRecord {
+  id: string;
+  code: string;
+  kind: 'DISCOUNT' | 'CREDIT_MEMO';
+  amount: string;
+  balance: string;
+  status: 'ACTIVE' | 'USED' | 'CANCELLED';
+  expiresAt: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface VoucherListResult {
+  items: VoucherRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
 }

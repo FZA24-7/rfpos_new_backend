@@ -2,6 +2,8 @@ import type { Request, Response } from 'express';
 import type {
   CreateSaleInput,
   CreateSaleReturnInput,
+  IssueVoucherInput,
+  VoucherListQuery,
   PosProductSearchQuery,
   ReceiptQuery,
   SaleListQuery,
@@ -24,6 +26,25 @@ const pdfResponse = (res: Response, filename: string, pdf: Buffer): void => {
 };
 
 export const createSaleController = (sales: SaleService) => ({
+  async issueVoucher(req: Request, res: Response): Promise<void> {
+    res.status(201).json(await sales.issueVoucher(actorFrom(req), req.body as IssueVoucherInput));
+  },
+  async listVouchers(req: Request, res: Response): Promise<void> {
+    res
+      .status(200)
+      .json(
+        await sales.listVouchers(actorFrom(req).tenantId, req.query as unknown as VoucherListQuery),
+      );
+  },
+  async getVoucher(req: Request, res: Response): Promise<void> {
+    const { code } = req.params as { code: string };
+    res.status(200).json(await sales.getVoucher(actorFrom(req).tenantId, code));
+  },
+  async cancelVoucher(req: Request, res: Response): Promise<void> {
+    const { code } = req.params as { code: string };
+    res.status(200).json(await sales.cancelVoucher(actorFrom(req), code));
+  },
+
   async searchProducts(req: Request, res: Response): Promise<void> {
     const q = req.query as unknown as PosProductSearchQuery;
     res.status(200).json({ items: await sales.searchProducts(actorFrom(req).tenantId, q) });

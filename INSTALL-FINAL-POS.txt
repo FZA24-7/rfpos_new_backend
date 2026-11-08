@@ -1,0 +1,26 @@
+FINAL POS PATCH  -  replaces the earlier "Reference-POS" patch (it already contains those 3 files)
+Includes: reference-style POS + discount vouchers, credit memos, service fee, other charges, rounding,
+FBR/Order/C.N numbers and Sales Man saved as real fields, Loyal Customer tab, Vouchers screen.
+22 files, ONE database migration (additive: new columns + 1 new table, nothing is deleted).
+
+STEP 1  Copy the folders in this ZIP over your project (apps, packages, docs). Say "replace" when asked.
+
+STEP 2  Update the database (needed once) - in the project folder, with your Supabase DATABASE_URL set as before:
+          pnpm db:generate
+          pnpm db:migrate:deploy
+        (the migration is "20261108120000_pos_extras"; it can take a few minutes on Supabase, like last time)
+
+STEP 3  Publish the server and rebuild the app:
+          git add -A
+          git commit -m "feat: POS vouchers, charges, rounding"
+          git push                         (Vercel redeploys the API)
+          pnpm --filter @mafk/web run build
+          pnpm desktop:dist                (new .exe)
+
+STEP 4  Check it:
+          - POS > "Vouchers" > issue a Credit memo of 500 (needs the discount.apply right: Master/Client admin has it)
+          - POS > add an item > type the code in "Credit Memo #" > Check > the total drops > Complete sale
+          - Open Vouchers again: the balance went down
+        Run the tests if you like: pnpm test
+
+Order matters: do STEP 2 before using the new server (the new API expects the new columns).

@@ -49,6 +49,13 @@ export class AdminSecurityService {
     private readonly hasher: PasswordHasher,
   ) {}
 
+  /** For the platform Master Admin, who names the business explicitly. */
+  async assertTenantExists(tenantId: string): Promise<void> {
+    if (!(await this.repos.tenants.findById(tenantId))) {
+      throw new DomainError('NOT_FOUND', 'Client not found.', 404);
+    }
+  }
+
   listUsers(
     tenantId: string,
     q: { q?: string; includeDisabled: boolean },

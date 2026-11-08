@@ -82,6 +82,9 @@ export const CreateTenantForm = ({
                 placeholder="ACME"
                 required
               />
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                1-20 letters, numbers, dot or dash (e.g. MTJ, J.). Shown at sign-in.
+              </p>
             </div>
             <div>
               <Label htmlFor="name">Business name</Label>
@@ -112,6 +115,9 @@ export const CreateTenantForm = ({
                   onChange={(e) => setAdminLoginId(e.target.value)}
                   required
                 />
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  3-32 letters, numbers, dot, dash or underscore.
+                </p>
               </div>
               <div>
                 <Label htmlFor="adminName">Display name</Label>
@@ -133,6 +139,9 @@ export const CreateTenantForm = ({
                 minLength={10}
                 required
               />
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                At least 10 characters with an uppercase letter, a lowercase letter and a digit.
+              </p>
             </div>
           </fieldset>
 

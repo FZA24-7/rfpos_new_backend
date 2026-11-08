@@ -152,6 +152,36 @@ export interface LogFilter {
   limit?: number;
 }
 
+/**
+ * The user / rights calls of the Security File. For a business's own administrator they go to /admin/*; the platform
+ * Master Admin passes a business id and the same screen works against that business.
+ */
+export const userApiFor = (tenantId?: string) => {
+  const base = tenantId ? `/master/tenants/${tenantId}/user-admin` : '/admin';
+  const users = tenantId ? `${base}/users` : '/admin/users';
+  return {
+    registry: () =>
+      apiRequest<Registry>(tenantId ? '/master/user-admin/registry' : '/admin/registry'),
+    lookups: () => apiRequest<Lookups>(tenantId ? `${base}/lookups` : '/admin/security/lookups'),
+    users: (q: { q?: string; includeDisabled?: boolean }) =>
+      apiRequest<UserRow[]>(`${users}${qs({ q: q.q, includeDisabled: q.includeDisabled })}`),
+    user: (id: string) => apiRequest<UserDetail>(`${users}/${id}`),
+    createUser: (body: SaveUserBody) => apiRequest<UserDetail>(users, { method: 'POST', body }),
+    updateUser: (id: string, body: Partial<SaveUserBody> & { status?: 'ACTIVE' | 'DISABLED' }) =>
+      apiRequest<UserDetail>(`${users}/${id}`, { method: 'PATCH', body }),
+    deleteUser: (id: string) => apiRequest<void>(`${users}/${id}`, { method: 'DELETE' }),
+    /** Whether the signed-in person may change this user's Login ID (the existing Login ID rules decide). */
+    loginIdEditable: async (id: string): Promise<boolean> =>
+      (await apiRequest<{ editable: boolean }>(`/users/${id}/login-id/edit-state`)).editable,
+    changeLoginId: (id: string, newLoginId: string) =>
+      apiRequest<{ loginId: string }>(`/users/${id}/login-id`, {
+        method: 'PATCH',
+        body: { newLoginId },
+      }),
+  };
+};
+export type UserApi = ReturnType<typeof userApiFor>;
+
 export const adminApi = {
   registry: () => apiRequest<Registry>('/admin/registry'),
   lookups: () => apiRequest<Lookups>('/admin/security/lookups'),

@@ -60,6 +60,8 @@ import type { AdminSecurityService } from '../services/admin-security.service.js
 import type { AdminOperationsService } from '../services/admin-operations.service.js';
 import { createAdminController } from './controllers/admin.controller.js';
 import { adminRoutes } from './routes/admin.routes.js';
+import { createMasterUserAdminController } from './controllers/master-user-admin.controller.js';
+import { masterUserAdminRoutes } from './routes/master-user-admin.routes.js';
 
 export interface AppDependencies {
   logger: Logger;
@@ -173,6 +175,14 @@ export const createApp = (deps: AppDependencies): Express => {
     '/api',
     adminRoutes(
       createAdminController(deps.adminSecurityService, deps.adminOperationsService),
+      deps.accessTokens,
+    ),
+  );
+
+  app.use(
+    '/api',
+    masterUserAdminRoutes(
+      createMasterUserAdminController(deps.adminSecurityService, deps.adminOperationsService),
       deps.accessTokens,
     ),
   );

@@ -396,5 +396,129 @@ export function describeSaleIntegrityContract(
         expect((await svc.getById(sale.id, h.actor.tenantId)).status).toBe('COMPLETED');
       });
     });
+
+    describe('POS extras: charges, rounding, vouchers, credit memos', () => {
+      const one = (over: Partial<CreateSaleInput> = {}): CreateSaleInput =>
+        body({
+          items: [{ productId: h.ids.productId, quantity: '1' }], // 100.00
+          payments: [{ method: 'CASH', amount: '500.00' }],
+          ...over,
+        });
+      const issue = (kind: 'DISCOUNT' | 'CREDIT_MEMO', amount: string) =>
+        svc.issueVoucher(h.actor, { kind, amount });
+
+      it('adds service fee and other charges, rounds to a whole number, and stores the references', async () => {
+        const { sale } = await svc.createSale(
+          h.actor,
+          one({
+            serviceFee: '5.50',
+            otherCharges: '2.25',
+            roundToWhole: true,
+            orderRef: 'ORD-1',
+            fbrInvoiceNo: 'FBR-9',
+            creditNoteRef: 'CN-3',
+            items: [{ productId: h.ids.productId, quantity: '1', salesman: 'Ali' }],
+          }),
+        );
+        expect(sale).toMatchObject({
+          subtotal: '100.00',
+          serviceFee: '5.50',
+          otherCharges: '2.25',
+          roundingAmount: '0.25',
+          grandTotal: '108.00',
+          orderRef: 'ORD-1',
+          fbrInvoiceNo: 'FBR-9',
+          creditNoteRef: 'CN-3',
+          changeDue: '392.00',
+        });
+        expect(sale.items[0]!.salesman).toBe('Ali');
+        const again = await svc.getById(sale.id, h.actor.tenantId);
+        expect(again.grandTotal).toBe('108.00');
+      });
+
+      it('rounds down as well (107.40 -> 107.00 gives -0.40)', async () => {
+        const { sale } = await svc.createSale(
+          h.actor,
+          one({ serviceFee: '7.40', roundToWhole: true }),
+        );
+        expect(sale.roundingAmount).toBe('-0.40');
+        expect(sale.grandTotal).toBe('107.00');
+      });
+
+      it('a discount voucher lowers the total and is used up', async () => {
+        const v = await issue('DISCOUNT', '30.00');
+        const { sale } = await svc.createSale(h.actor, one({ discountVoucherCode: v.code }));
+        expect(sale).toMatchObject({ voucherAmount: '30.00', grandTotal: '70.00' });
+        expect(sale.voucherRefs).toBe(`${v.code}:30.00`);
+        const after = await svc.getVoucher(h.actor.tenantId, v.code);
+        expect(after).toMatchObject({ balance: '0.00', status: 'USED' });
+        const e = await rejects(svc.createSale(h.actor, one({ discountVoucherCode: v.code })));
+        expect(e.code).toBe('VOUCHER_INVALID');
+      });
+
+      it('a credit memo bigger than the bill is only partly used and stays active', async () => {
+        const v = await issue('CREDIT_MEMO', '500.00');
+        const { sale } = await svc.createSale(
+          h.actor,
+          one({ creditMemoCode: v.code, payments: [] }),
+        );
+        expect(sale).toMatchObject({
+          voucherAmount: '100.00',
+          grandTotal: '0.00',
+          paidTotal: '0.00',
+        });
+        expect(await svc.getVoucher(h.actor.tenantId, v.code)).toMatchObject({
+          balance: '400.00',
+          status: 'ACTIVE',
+        });
+      });
+
+      it('a discount voucher cannot be used in the credit-memo box and vice versa', async () => {
+        const dv = await issue('DISCOUNT', '10.00');
+        const e = await rejects(svc.createSale(h.actor, one({ creditMemoCode: dv.code })));
+        expect(e.code).toBe('VOUCHER_INVALID');
+      });
+
+      it('a failed sale does not spend the voucher (all-or-nothing)', async () => {
+        const v = await issue('DISCOUNT', '30.00');
+        const undo = await h.faults.failMovementWrite(h.ids.productId);
+        try {
+          await expect(
+            svc.createSale(h.actor, one({ discountVoucherCode: v.code })),
+          ).rejects.toBeTruthy();
+        } finally {
+          await undo();
+        }
+        expect(await svc.getVoucher(h.actor.tenantId, v.code)).toMatchObject({
+          balance: '30.00',
+          status: 'ACTIVE',
+        });
+      });
+
+      it('two sales racing for the same voucher: exactly one gets it', async () => {
+        const v = await issue('CREDIT_MEMO', '100.00');
+        const results = await Promise.allSettled([
+          svc.createSale(h.actor, one({ creditMemoCode: v.code, payments: [] })),
+          svc.createSale(h.actor, one({ creditMemoCode: v.code, payments: [] })),
+        ]);
+        expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+        expect(await svc.getVoucher(h.actor.tenantId, v.code)).toMatchObject({
+          balance: '0.00',
+          status: 'USED',
+        });
+      });
+
+      it('a voucher is private to its tenant and an expired or cancelled one is refused', async () => {
+        const v = await issue('DISCOUNT', '10.00');
+        expect(await h.repos.vouchers.findByCode(h.otherTenantActor.tenantId, v.code)).toBeNull();
+        await svc.cancelVoucher(h.actor, v.code);
+        const e = await rejects(svc.createSale(h.actor, one({ discountVoucherCode: v.code })));
+        expect(e.code).toBe('VOUCHER_INVALID');
+        const dup = await rejects(
+          svc.issueVoucher(h.actor, { kind: 'DISCOUNT', amount: '5.00', code: v.code }),
+        );
+        expect(dup.code).toBe('VOUCHER_EXISTS');
+      });
+    });
   });
 }

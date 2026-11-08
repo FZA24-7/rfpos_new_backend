@@ -67,6 +67,9 @@ import type {
   TransactionalAudit,
   RecordReturnInput,
   RecordSaleInput,
+  IssueVoucherRecordInput,
+  VoucherListFilter,
+  VoucherRecord,
   RecordSaleResult,
   SaleDetail,
   SaleListFilter,
@@ -272,6 +275,7 @@ export interface Repositories {
   purchases: PurchaseRepository;
   // Phase 5 additions:
   sales: SaleRepository;
+  vouchers: VoucherRepository;
   // Phase 6 additions:
   customers: CustomerRepository;
   expenses: ExpenseRepository;
@@ -404,6 +408,16 @@ export interface InventoryRepository {
  * Like `PurchaseRepository`, each write is ONE method so the sale/refund, every stock movement, the payments, the
  * document-number claim and the audit record commit or roll back together.
  */
+export interface VoucherRepository {
+  issue(input: IssueVoucherRecordInput): Promise<VoucherRecord>;
+  findByCode(tenantId: string, code: string): Promise<VoucherRecord | null>;
+  list(
+    tenantId: string,
+    f: VoucherListFilter,
+  ): Promise<{ items: VoucherRecord[]; total: number; page: number; pageSize: number }>;
+  cancel(tenantId: string, code: string): Promise<VoucherRecord | null>;
+}
+
 export interface SaleRepository {
   /**
    * Idempotent on (tenantId, clientRequestId): a repeat returns the stored sale with `replayed: true` and writes

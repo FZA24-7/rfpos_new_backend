@@ -45,3 +45,9 @@ Where it is defined: `packages/shared/src/admin-registry.ts` (modules → forms/
 - The Login ID cannot be changed in the Security File (use the existing change-Login-ID flow).
 - CSV export of reports still needs `reports.export`, which the Security File does not grant.
 - Not verified here: Vercel, Supabase, Windows, the desktop installer, a real browser session.
+
+## Master Admin: users and rights for any client
+
+Master Admin -> open a client -> **Manage users & rights** opens the same Security Panel for that client. The Master Admin can create users with module/form/report rights, change name, status, password, location, FBR/PC fields and rights, delete users, and change a Login ID (Edit, when the Login ID rules allow it). The client's license user limit still applies. The business owner (Client Master Admin) always keeps full access, so owner rights are shown read-only.
+
+In a client's own Security File, the rights boxes can be ticked straight from a saved user (the panel switches into Edit by itself, then Save). Ticking a right inside a module that is not yet allowed allows the module too.

@@ -15,6 +15,7 @@ import {
   type CustomerSummary,
 } from '../../src/domain/types.js';
 import { formatQuantity, formatRate, formatUnitPrice } from '../../src/services/format.js';
+import type { FakeVoucherRepository } from './fake-voucher-repository.js';
 import { planReturn } from '../../src/services/return-planner.js';
 import type {
   FakeAuditLogRepository,
@@ -42,6 +43,8 @@ export class FakeSaleRepository implements SaleRepository {
     find(id: string, tenantId: string): CustomerSummary | undefined;
     balanceOf(id: string): string;
   } | null = null;
+  /** Wired by createFakeRepositories: vouchers redeemed inside the sale "transaction". */
+  voucherStore: FakeVoucherRepository | null = null;
   /** Other fakes that take part in the same "transaction" register a snapshotter returning their restore fn. */
   private readonly snapshotters: (() => () => void)[] = [];
 
@@ -59,6 +62,7 @@ export class FakeSaleRepository implements SaleRepository {
   transact<T>(work: () => Promise<T>): Promise<T> {
     const run = async (): Promise<T> => {
       const restores = this.snapshotters.map((f) => f());
+      if (this.voucherStore) restores.push(this.voucherStore.snapshot());
       const costs = new Map(this.itemCosts);
       const snap = {
         sales: clone([...this.sales]),
@@ -219,6 +223,7 @@ export class FakeSaleRepository implements SaleRepository {
         cartDiscountAmount: input.cartDiscountAmount,
         taxTotal: input.taxTotal,
         notes: input.notes ?? null,
+        ...input.extras,
         soldAt: new Date(),
         items: input.items.map((i) => ({
           ...i,
@@ -242,6 +247,7 @@ export class FakeSaleRepository implements SaleRepository {
         this.itemCosts.set(it.id, this.products.products.get(it.productId)!.costPrice),
       );
       this.afterSaleInsert?.();
+      for (const r of input.redeem) this.voucherStore?.redeem(input.tenantId, r.code, r.amount);
 
       for (const item of input.items) {
         await this.inventory.applyMovement({

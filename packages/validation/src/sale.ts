@@ -48,6 +48,15 @@ const refineNoDoubleDiscount = <T extends { discountPercent?: string; discountAm
   }
 };
 
+/** Voucher codes are typed or scanned: letters, digits, dash. Stored upper-case. */
+export const voucherCode = z
+  .string()
+  .trim()
+  .min(3)
+  .max(32)
+  .regex(/^[A-Za-z0-9-]+$/, 'Use letters, digits and dashes only')
+  .transform((v) => v.toUpperCase());
+
 export const saleLineSchema = z
   .object({
     productId: z.string().trim().min(1),
@@ -56,6 +65,8 @@ export const saleLineSchema = z
     unitPrice: decimalString().optional(),
     discountPercent: percentString.optional(),
     discountAmount: moneyString.optional(),
+    /** Salesman who made this sale line (commission / reporting). */
+    salesman: z.string().trim().max(40).optional(),
   })
   .superRefine(refineNoDoubleDiscount);
 export type SaleLineBody = z.infer<typeof saleLineSchema>;
@@ -82,6 +93,18 @@ export const createSaleSchema = z
     customerName: z.string().trim().max(120).optional(),
     customerPhone: z.string().trim().max(32).optional(),
     notes: z.string().trim().max(500).optional(),
+    /** Document references from the POS header. */
+    orderRef: z.string().trim().max(40).optional(),
+    fbrInvoiceNo: z.string().trim().max(40).optional(),
+    creditNoteRef: z.string().trim().max(40).optional(),
+    /** Charges added on top of the items. */
+    serviceFee: moneyString.optional(),
+    otherCharges: moneyString.optional(),
+    /** Round the payable amount to a whole number (the server works out the rounding amount). */
+    roundToWhole: z.boolean().optional(),
+    /** Codes of a discount voucher and a credit memo to redeem against this sale. */
+    discountVoucherCode: voucherCode.optional(),
+    creditMemoCode: voucherCode.optional(),
   })
   .superRefine(refineNoDoubleDiscount);
 export type CreateSaleInput = z.infer<typeof createSaleSchema>;
@@ -120,3 +143,26 @@ export const posProductSearchSchema = z.object({
   search: z.string().trim().min(1).max(120),
 });
 export type PosProductSearchQuery = z.infer<typeof posProductSearchSchema>;
+
+export const voucherKinds = ['DISCOUNT', 'CREDIT_MEMO'] as const;
+
+export const issueVoucherSchema = z.object({
+  kind: z.enum(voucherKinds),
+  amount: moneyString.refine((v) => /[1-9]/.test(v), 'Amount must be greater than zero'),
+  /** Leave empty to have one generated. */
+  code: voucherCode.optional(),
+  expiresAt: z.coerce.date().optional(),
+  note: z.string().trim().max(200).optional(),
+});
+export type IssueVoucherInput = z.infer<typeof issueVoucherSchema>;
+
+export const voucherListQuerySchema = z.object({
+  kind: z.enum(voucherKinds).optional(),
+  status: z.enum(['ACTIVE', 'USED', 'CANCELLED']).optional(),
+  search: z.string().trim().max(40).optional(),
+  page: z.coerce.number().int().positive().max(100_000).default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(20),
+});
+export type VoucherListQuery = z.infer<typeof voucherListQuerySchema>;
+
+export const voucherCodeParamSchema = z.object({ code: voucherCode });

@@ -9,6 +9,7 @@ import type {
   TenantStatus,
   UserSummary,
 } from '../api/types.js';
+import { SecurityFilePage } from './admin/SecurityFilePage.js';
 import { Card, CardBody, CardHeader } from '../components/ui/Card.js';
 import { Badge } from '../components/ui/Badge.js';
 import { Button } from '../components/ui/Button.js';
@@ -40,6 +41,7 @@ export const TenantDetailPage = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusUpdating, setStatusUpdating] = useState(false);
+  const [managing, setManaging] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -78,6 +80,19 @@ export const TenantDetailPage = ({
       setStatusUpdating(false);
     }
   };
+
+  if (managing && data) {
+    return (
+      <SecurityFilePage
+        tenantId={tenantId}
+        clientName={`${data.tenant.name} (${data.tenant.code})`}
+        onExit={() => {
+          setManaging(false);
+          void load();
+        }}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -171,8 +186,9 @@ export const TenantDetailPage = ({
             </Card>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Users</h2>
+                <Button onClick={() => setManaging(true)}>Manage users &amp; rights</Button>
               </CardHeader>
               <CardBody>
                 {data.users.length === 0 ? (

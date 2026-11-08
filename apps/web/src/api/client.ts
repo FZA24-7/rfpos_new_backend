@@ -88,11 +88,25 @@ export const apiRequest = async <T>(path: string, options: RequestOptions = {}):
   const data = contentType.includes('application/json') ? await res.json() : undefined;
 
   if (!res.ok) {
-    const err = (data as { error?: { code?: string; message?: string } } | undefined)?.error;
+    const err = (
+      data as
+        | {
+            error?: {
+              code?: string;
+              message?: string;
+              issues?: { path: string; message: string }[];
+            };
+          }
+        | undefined
+    )?.error;
+    // A validation failure says WHICH field is wrong, so the person can fix it.
+    const detail = err?.issues?.length
+      ? ` ${err.issues.map((i) => (i.path ? `${i.path}: ${i.message}` : i.message)).join('; ')}`
+      : '';
     throw new ApiError(
       res.status,
       err?.code ?? 'UNKNOWN',
-      err?.message ?? `Request failed (${res.status})`,
+      `${err?.message ?? `Request failed (${res.status})`}${detail}`,
     );
   }
 

@@ -592,12 +592,66 @@ export interface SaleLineInput {
   taxAmount: string;
   /** taxable + tax, where taxable already includes this line's share of the cart discount. */
   lineTotal: string;
+  salesman?: string | undefined;
 }
 
 export interface SalePaymentInput {
   method: TenderMethod;
   amount: string;
   reference?: string;
+}
+
+/** Document references and charges on top of the item lines (all money values are 2-decimal strings). */
+export interface SaleExtras {
+  orderRef: string | null;
+  fbrInvoiceNo: string | null;
+  creditNoteRef: string | null;
+  serviceFee: string;
+  otherCharges: string;
+  roundingAmount: string;
+  voucherAmount: string;
+  voucherRefs: string | null;
+}
+
+export class VoucherRedeemError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'VoucherRedeemError';
+  }
+}
+
+export type VoucherKind = 'DISCOUNT' | 'CREDIT_MEMO';
+export type VoucherStatus = 'ACTIVE' | 'USED' | 'CANCELLED';
+
+export interface VoucherRecord {
+  id: string;
+  tenantId: string;
+  code: string;
+  kind: VoucherKind;
+  amount: string;
+  balance: string;
+  status: VoucherStatus;
+  expiresAt: Date | null;
+  note: string | null;
+  createdAt: Date;
+}
+
+export interface VoucherListFilter {
+  kind?: VoucherKind;
+  status?: VoucherStatus;
+  search?: string;
+  page: number;
+  pageSize: number;
+}
+
+export interface IssueVoucherRecordInput {
+  tenantId: string;
+  code: string;
+  kind: VoucherKind;
+  amount: string;
+  expiresAt?: Date;
+  note?: string;
+  issuedById: string;
 }
 
 export interface RecordSaleInput {
@@ -619,6 +673,9 @@ export interface RecordSaleInput {
   customerName?: string;
   customerPhone?: string;
   notes?: string;
+  extras: SaleExtras;
+  /** Vouchers redeemed inside the same transaction (balance reduced atomically). */
+  redeem: { code: string; amount: string }[];
   /** Written inside the same transaction as the sale, its stock movements and its payments. */
   audit: TransactionalAudit;
 }
@@ -684,6 +741,14 @@ export interface SaleDetail extends SaleSummary {
   cartDiscountAmount: string;
   taxTotal: string;
   notes: string | null;
+  orderRef: string | null;
+  fbrInvoiceNo: string | null;
+  creditNoteRef: string | null;
+  serviceFee: string;
+  otherCharges: string;
+  roundingAmount: string;
+  voucherAmount: string;
+  voucherRefs: string | null;
   items: SaleItemRecord[];
   payments: SalePaymentRecord[];
   returns: SaleReturnDetail[];

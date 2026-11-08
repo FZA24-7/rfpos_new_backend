@@ -30,6 +30,11 @@ export const buildSaleReceipt = (sale: SaleDetail, party: Party): ReceiptDocumen
   if (sale.cartDiscountAmount !== '0.00')
     totals.push({ label: 'Cart discount', value: `-${sale.cartDiscountAmount}` });
   if (sale.taxTotal !== '0.00') totals.push({ label: 'Tax', value: sale.taxTotal });
+  const nz = (v: string): boolean => /[1-9]/.test(v);
+  if (nz(sale.serviceFee)) totals.push({ label: 'Service fee', value: sale.serviceFee });
+  if (nz(sale.otherCharges)) totals.push({ label: 'Other charges', value: sale.otherCharges });
+  if (nz(sale.voucherAmount)) totals.push({ label: 'Vouchers', value: `-${sale.voucherAmount}` });
+  if (nz(sale.roundingAmount)) totals.push({ label: 'Rounding', value: sale.roundingAmount });
   totals.push({ label: 'TOTAL', value: sale.grandTotal, strong: true });
 
   const payments: ReceiptDocument['payments'] = sale.payments.map((p) => ({

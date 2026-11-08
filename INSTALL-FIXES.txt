@@ -1,0 +1,19 @@
+FIXES PATCH - Create Client error, Security File boxes, Master Admin user management
+=====================================================================================
+Only changed/new files. No database change, no new dependency. cmd.exe / PowerShell.
+
+1. Copy everything inside "Fixes-Patch" over your project folder (Replace when asked).
+2. Backend (Vercel):   git add -A   then   git commit -m "Fixes: master user management"   then   git push
+   Wait until the Vercel deployment is green.
+3. Desktop app:        pnpm --filter @mafk/web run build     then     pnpm desktop:dist
+   Close the old app completely and run the NEW build.
+
+What changed
+- Create Client: the error now names the exact field and reason (instead of only "Request validation failed"),
+  and the form shows the rules for client code, Login ID and password.
+- Security File: rights boxes work straight from a saved user (it switches into Edit by itself, then Save);
+  a hint explains each state; the owner's rights are shown read-only.
+- Master Admin: client page -> "Manage users & rights" = the full Security Panel for that client:
+  create users with module/form/report rights, edit name/status/password/location/rights, delete,
+  change Login ID (Edit).
+Details: docs/ADMINISTRATOR.md

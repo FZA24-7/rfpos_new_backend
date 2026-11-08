@@ -13,8 +13,9 @@ import {
 } from 'lucide-react';
 import { ApiError } from '../../api/client.js';
 import {
-  adminApi,
   RIGHT_LABELS,
+  userApiFor,
+  type UserApi,
   type Lookups,
   type Registry,
   type RegistryItem,
@@ -180,11 +181,25 @@ const Modal = ({
   </div>
 );
 
-export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
+/**
+ * The Security Panel. With `tenantId` it is the platform Master Admin's panel for that business: the same screen,
+ * pointed at the Master Admin endpoints, governed by the Master Admin's own `users.*` rights.
+ */
+export const SecurityFilePage = ({
+  onExit,
+  tenantId,
+  clientName,
+}: {
+  onExit: () => void;
+  tenantId?: string;
+  clientName?: string;
+}) => {
   const { user: me } = useAuth();
-  const mayAdd = can(me, 'security_file.create');
-  const mayEdit = can(me, 'security_file.edit');
-  const mayDelete = can(me, 'security_file.delete');
+  const api = useMemo(() => userApiFor(tenantId), [tenantId]);
+  const mayAdd = tenantId ? can(me, 'users.manage') : can(me, 'security_file.create');
+  const mayEdit = tenantId ? can(me, 'users.manage') : can(me, 'security_file.edit');
+  const mayDelete = tenantId ? can(me, 'users.manage') : can(me, 'security_file.delete');
+  const [loginIdCan, setLoginIdCan] = useState(false);
 
   const [registry, setRegistry] = useState<Registry | null>(null);
   const [lookups, setLookups] = useState<Lookups | null>(null);
@@ -208,7 +223,7 @@ export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
     let cancelled = false;
     void (async () => {
       try {
-        const [r, l] = await Promise.all([adminApi.registry(), adminApi.lookups()]);
+        const [r, l] = await Promise.all([api.registry(), api.lookups()]);
         if (cancelled) return;
         setRegistry(r);
         setLookups(l);
@@ -229,20 +244,29 @@ export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  const loadUser = useCallback(async (id: string) => {
-    setError(null);
-    setNotice(null);
-    try {
-      const u = await adminApi.user(id);
-      setLoaded(u);
-      setForm(formFrom(u));
-      setRights(cloneSelection(u.rights));
-      setBaseRights(cloneSelection(u.rights));
-      setMode('view');
-    } catch (err) {
-      setError(message(err));
-    }
-  }, []);
+  const loadUser = useCallback(
+    async (id: string) => {
+      setError(null);
+      setNotice(null);
+      try {
+        const u = await api.user(id);
+        setLoaded(u);
+        setForm(formFrom(u));
+        setRights(cloneSelection(u.rights));
+        setBaseRights(cloneSelection(u.rights));
+        setMode('view');
+        // Whether this person may change this user's Login ID is decided by the server's Login ID rules.
+        setLoginIdCan(false);
+        api
+          .loginIdEditable(id)
+          .then(setLoginIdCan)
+          .catch(() => setLoginIdCan(false));
+      } catch (err) {
+        setError(message(err));
+      }
+    },
+    [api],
+  );
 
   const startAdd = () => {
     setError(null);
@@ -296,7 +320,7 @@ export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
       if (mode === 'add') {
         if (!form.loginId.trim()) return setError('Enter the User ID.');
         if (!form.password) return setError('Enter a password for the new user.');
-        saved = await adminApi.createUser({
+        saved = await api.createUser({
           ...body(),
           loginId: form.loginId.trim(),
           password: form.password,
@@ -305,12 +329,15 @@ export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
         });
         setNotice(`User ${saved.loginId} created.`);
       } else if (loaded) {
-        const patch: Parameters<typeof adminApi.updateUser>[1] = { ...body() };
+        const patch: Parameters<typeof api.updateUser>[1] = { ...body() };
         if (form.password) patch.password = form.password;
         if (form.clearToken) patch.fbrToken = null;
         else if (form.fbrToken.trim()) patch.fbrToken = form.fbrToken.trim();
         if (loaded.rightsEditable && !sameSelection(rights, baseRights)) patch.rights = rights;
-        saved = await adminApi.updateUser(loaded.id, patch);
+        if (loginIdCan && form.loginId.trim().toLowerCase() !== loaded.loginId) {
+          await api.changeLoginId(loaded.id, form.loginId.trim());
+        }
+        saved = await api.updateUser(loaded.id, patch);
         setNotice('Saved.');
       } else return;
       setLoaded(saved);
@@ -332,7 +359,7 @@ export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
     setBusy(true);
     setError(null);
     try {
-      await adminApi.deleteUser(loaded.id);
+      await api.deleteUser(loaded.id);
       setNotice(`User ${loaded.loginId} deleted.`);
       setLoaded(null);
       setForm(blankForm());
@@ -349,7 +376,7 @@ export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
     if (!loaded) return;
     setError(null);
     try {
-      const saved = await adminApi.updateUser(loaded.id, {
+      const saved = await api.updateUser(loaded.id, {
         pcSerial: form.pcSerial.trim() || null,
       });
       setLoaded(saved);
@@ -369,17 +396,46 @@ export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
 
   const gridItems = module ? itemsByKind(module, gridTab === 'inputs' ? 'form' : 'report') : [];
   const approved = module ? isModuleApproved(rights, module.key) : false;
-  const gridDisabled = !editing || rightsLocked || !approved;
+  // Rights can be changed while adding/editing, and also straight from a loaded user: touching a box then switches
+  // into Edit automatically (Save/Undo apply as usual), so the boxes are never "dead" after a user has been created.
+  const mayChangeRights =
+    !rightsLocked && (editing || (mode === 'view' && loaded !== null && mayEdit));
+  const gridDisabled = !mayChangeRights;
+  const ensureEdit = () => {
+    if (mode === 'view') setMode('edit');
+  };
 
   const tick = (item: RegistryItem, right: Right, on: boolean) => {
-    if (module) setRights((r) => toggleRight(r, module, item, right, on));
+    if (!module) return;
+    ensureEdit();
+    // Ticking a right inside a module that is not yet allowed allows the module too (a right needs its module).
+    setRights((r) =>
+      toggleRight(on ? setModuleApproved(r, module, true) : r, module, item, right, on),
+    );
   };
+
+  const rightsHint: string | null = (() => {
+    if (mode === 'idle' || (!loaded && mode !== 'add'))
+      return 'Click Add to create a user, or Search to open an existing one.';
+    if (rightsLocked)
+      return loaded?.systemRole === 'CLIENT_MASTER_ADMIN'
+        ? 'This is the business owner. The owner always has every right, so this is shown for information only.'
+        : 'You cannot change your own rights.';
+    if (!mayChangeRights) return 'You do not have permission to change users.';
+    if (mode === 'view')
+      return loaded?.rightsSource === 'role'
+        ? 'These rights come from the user’s role. Tick any box to give this user their own rights, then click Save.'
+        : 'Tick any box to change this user’s rights, then click Save.';
+    return null;
+  })();
 
   return (
     <div className="text-slate-900 dark:text-slate-100">
       {/* title + toolbar (matches the reference Security Panel) */}
       <div className="no-print mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-extrabold tracking-tight">Security Panel</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">
+          Security Panel{clientName ? ` — ${clientName}` : ''}
+        </h1>
         <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="Security Panel actions">
           <ToolbarButton
             icon={<FileSearch size={22} />}
@@ -512,7 +568,7 @@ export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
                     aria-label="User ID"
                     className={fieldCls}
                     value={form.loginId}
-                    disabled={mode !== 'add'}
+                    disabled={!(mode === 'add' || (mode === 'edit' && loginIdCan))}
                     onChange={(e) => set('loginId', e.target.value)}
                     autoComplete="off"
                   />
@@ -684,6 +740,14 @@ export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
                   Tick the modules this user may use. A module that is not ticked stays completely
                   inaccessible, whatever its forms say.
                 </p>
+                {rightsHint ? (
+                  <p
+                    role="status"
+                    className="mb-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200"
+                  >
+                    {rightsHint}
+                  </p>
+                ) : null}
                 <table className="w-full max-w-xl text-sm">
                   <thead className="bg-slate-100 text-left dark:bg-slate-800">
                     <tr>
@@ -703,10 +767,11 @@ export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
                             type="checkbox"
                             aria-label={`Allow module ${m.name}`}
                             checked={isModuleApproved(rights, m.key)}
-                            disabled={!editing || rightsLocked}
-                            onChange={(e) =>
-                              setRights((r) => setModuleApproved(r, m, e.target.checked))
-                            }
+                            disabled={!mayChangeRights}
+                            onChange={(e) => {
+                              ensureEdit();
+                              setRights((r) => setModuleApproved(r, m, e.target.checked));
+                            }}
                           />
                         </td>
                         <td className="px-2 py-1.5">
@@ -760,8 +825,8 @@ export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
             ) : null}
             {mode !== 'idle' && module && !approved ? (
               <p className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-                Module {module.name} is not approved for this user (see Checks Approval), so nothing
-                in it can be granted.
+                Module {module.name} is not allowed for this user yet. Ticking any right below
+                allows the module too (or tick it in Checks Approval).
               </p>
             ) : null}
             <div className="max-h-72 overflow-auto">
@@ -870,6 +935,7 @@ export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
 
       {searchOpen ? (
         <UserSearchModal
+          api={api}
           onClose={() => setSearchOpen(false)}
           onPick={(id) => {
             setSearchOpen(false);
@@ -900,9 +966,11 @@ export const SecurityFilePage = ({ onExit }: { onExit: () => void }) => {
 };
 
 const UserSearchModal = ({
+  api,
   onClose,
   onPick,
 }: {
+  api: UserApi;
   onClose: () => void;
   onPick: (id: string) => void;
 }) => {
@@ -916,7 +984,7 @@ const UserSearchModal = ({
     const t = setTimeout(() => {
       void (async () => {
         try {
-          const r = await adminApi.users({ q: q.trim() || undefined, includeDisabled });
+          const r = await api.users({ q: q.trim() || undefined, includeDisabled });
           if (!cancelled) setRows(r);
         } catch (err) {
           if (!cancelled) setError(message(err));
