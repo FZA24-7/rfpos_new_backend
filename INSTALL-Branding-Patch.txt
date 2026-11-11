@@ -1,0 +1,7 @@
+FZA POS BRANDING PATCH  (1 file)
+Replaces the splash/sign-in picture text: "RETAIL AI" -> "FZA POS",
+tagline -> "PROTECT YOUR BUSINESS FROM THEFT AND GROW IT".
+
+ 1. Unzip over the project root (replaces apps/web/src/assets/splash.webp).
+ 2. pnpm --filter @mafk/web run build
+ 3. pnpm --filter @mafk/desktop run dist:win   (new .exe, install it)
