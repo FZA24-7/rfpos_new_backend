@@ -10,6 +10,7 @@ import type { IpcMainInvokeEvent, MenuItemConstructorOptions } from 'electron';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { loadConfig, saveConfig } from './config-store';
+import { getMachineSerial } from './machine-serial';
 import type { DesktopConfig } from './config-store';
 import {
   APP_ORIGIN,
@@ -24,7 +25,10 @@ import {
   toServerUrl,
 } from './policy';
 
+const PC_SERIAL_HEADER = 'x-mafk-pc-serial';
 const SETTINGS_PATH = '/__desktop/settings.html';
+/** The round sign-in badge the user sees first (rendered by the web app, only inside this shell). */
+const LAUNCHER_PATH = '/launcher';
 const ASSETS_DIR = path.resolve(__dirname, '..', 'assets');
 const webRoot = (): string =>
   app.isPackaged
@@ -47,6 +51,10 @@ protocol.registerSchemesAsPrivileged([
 let config: DesktopConfig = { serverUrl: '' };
 let mainWindow: BrowserWindow | null = null;
 let settingsWindow: BrowserWindow | null = null;
+let launcherWindow: BrowserWindow | null = null;
+/** Resolves when the main window's page says the signed-in app is on screen (or after a safety timeout). */
+let mainReady: Promise<void> = Promise.resolve();
+let markMainReady: () => void = () => undefined;
 const configFile = (): string => path.join(app.getPath('userData'), 'config.json');
 
 const securityHeaders = (contentType: string): Record<string, string> => ({
@@ -86,9 +94,16 @@ const proxyToServer = async (request: Request): Promise<Response> => {
     // http:// server but can fail against https:// hosts such as Vercel, which made every POST (login) fail
     // with "cannot reach the server" while GET (health) worked.
     const body = hasBody ? await request.arrayBuffer() : undefined;
+    // The server locks an ID to the PC it is bound to (Sale > User PC Serial). The serial is added HERE, by the shell,
+    // replacing anything the page might have sent, so it always describes the computer the shell runs on.
+    const headers = filterRequestHeaders(request.headers.entries()).filter(
+      ([k]) => k.toLowerCase() !== PC_SERIAL_HEADER,
+    );
+    const serial = await getMachineSerial();
+    if (serial) headers.push([PC_SERIAL_HEADER, serial]);
     const upstream = await net.fetch(target, {
       method: request.method,
-      headers: filterRequestHeaders(request.headers.entries()),
+      headers,
       ...(body !== undefined && body.byteLength > 0 ? { body } : {}),
       credentials: 'include',
       redirect: 'manual',
@@ -144,22 +159,103 @@ const webPreferences = {
   devTools: !app.isPackaged,
 };
 
-const createMainWindow = (): void => {
-  mainWindow = new BrowserWindow({
+/** Smooth fade of a whole window (used for the hand-over from the sign-in badge to the app). */
+const fadeWindow = (win: BrowserWindow, from: number, to: number, ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    const steps = Math.max(1, Math.round(ms / 16));
+    let i = 0;
+    const tick = setInterval(() => {
+      i += 1;
+      if (win.isDestroyed()) {
+        clearInterval(tick);
+        resolve();
+        return;
+      }
+      win.setOpacity(from + (to - from) * Math.min(1, i / steps));
+      if (i >= steps) {
+        clearInterval(tick);
+        resolve();
+      }
+    }, 16);
+  });
+
+/** The main application window. It stays invisible until the signed-in app is ready, then the caller fades it in. */
+const createMainWindow = (): BrowserWindow => {
+  const win = new BrowserWindow({
     width: 1366,
     height: 820,
     minWidth: 1024,
     minHeight: 640,
     show: false,
-    backgroundColor: '#f8fafc',
+    opacity: 0,
+    backgroundColor: '#050816',
     title: 'MAFK-24/7 Retail-Flow POS',
     webPreferences,
   });
-  mainWindow.once('ready-to-show', () => mainWindow?.show());
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  mainWindow = win;
+  mainReady = new Promise<void>((resolve) => {
+    let done = false;
+    markMainReady = () => {
+      if (done) return;
+      done = true;
+      resolve();
+    };
+    // Safety net: never leave the badge on screen forever if the page cannot report back.
+    setTimeout(markMainReady, 9000);
   });
-  void mainWindow.loadURL(`${APP_ORIGIN}/`);
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
+  // The signed-in session lives in the shared cookie jar, so the app restores it by itself.
+  void win.loadURL(`${APP_ORIGIN}/`);
+  return win;
+};
+
+/** The round, frameless sign-in badge. Nothing else of the app is visible until the user has signed in. */
+const createLauncher = (): void => {
+  const win = new BrowserWindow({
+    width: 640,
+    height: 640,
+    useContentSize: true,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    maximizable: false,
+    minimizable: true,
+    fullscreenable: false,
+    hasShadow: false,
+    show: false,
+    center: true,
+    backgroundColor: '#00000000',
+    title: 'MAFK Retail-Flow POS',
+    webPreferences,
+  });
+  launcherWindow = win;
+  win.once('ready-to-show', () => win.show());
+  win.on('closed', () => {
+    if (launcherWindow === win) launcherWindow = null;
+  });
+  void win.loadURL(`${APP_ORIGIN}${LAUNCHER_PATH}`);
+};
+
+/** Signed in on the badge: open the app behind it, wait until it is ready, then cross-fade badge -> app. */
+const openAppFromLauncher = async (): Promise<void> => {
+  if (mainWindow) return;
+  const badge = launcherWindow;
+  const win = createMainWindow();
+  await mainReady;
+  if (win.isDestroyed()) return;
+  win.setOpacity(0);
+  win.show();
+  win.focus();
+  await Promise.all([fadeWindow(win, 0, 1, 450), badge ? fadeWindow(badge, 1, 0, 450) : undefined]);
+  badge?.close();
+};
+
+/** Signed out: close the app and bring the sign-in badge back. */
+const backToLauncher = (): void => {
+  if (!launcherWindow) createLauncher();
+  mainWindow?.close();
 };
 
 const openSettings = (): void => {
@@ -174,7 +270,7 @@ const openSettings = (): void => {
     minimizable: false,
     maximizable: false,
     title: 'Server settings',
-    ...(mainWindow ? { parent: mainWindow, modal: true } : {}),
+    ...(mainWindow && !mainWindow.isDestroyed() ? { parent: mainWindow, modal: true } : {}),
     autoHideMenuBar: true,
     webPreferences,
   });
@@ -209,6 +305,10 @@ ipcMain.handle('desktop:info', (e) => {
   if (!senderPath(e)) return null;
   return { version: app.getVersion(), platform: process.platform, serverUrl: config.serverUrl };
 });
+ipcMain.handle('desktop:get-serial', async (e) => {
+  if (!senderPath(e)) return null;
+  return getMachineSerial();
+});
 ipcMain.handle('desktop:open-settings', (e) => {
   if (!senderPath(e)) return;
   openSettings();
@@ -226,9 +326,24 @@ ipcMain.handle('desktop:set-server', async (e, input: unknown, force: unknown) =
   saveConfig(configFile(), config);
   // A different server means a different login: drop the old session cookie, then reload the app.
   await session.defaultSession.clearStorageData({ storages: ['cookies'] });
-  mainWindow?.webContents.reload();
+  (mainWindow ?? launcherWindow)?.webContents.reload();
   settingsWindow?.close();
   return { ok: true, value: parsed.value };
+});
+ipcMain.handle('desktop:launch-app', async (e) => {
+  if (senderPath(e) !== LAUNCHER_PATH) return;
+  await openAppFromLauncher();
+});
+ipcMain.handle('desktop:show-launcher', (e) => {
+  if (senderPath(e) !== '/') return;
+  backToLauncher();
+});
+ipcMain.handle('desktop:quit', (e) => {
+  if (senderPath(e) !== LAUNCHER_PATH) return;
+  app.quit();
+});
+ipcMain.on('desktop:app-ready', (e) => {
+  if (mainWindow && e.sender === mainWindow.webContents) markMainReady();
 });
 ipcMain.handle('desktop:close-settings', (e) => {
   if (senderPath(e) !== SETTINGS_PATH) return;
@@ -293,9 +408,10 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on('second-instance', () => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
+    const win = mainWindow ?? launcherWindow;
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.focus();
     }
   });
 
@@ -307,9 +423,9 @@ if (!app.requestSingleInstanceLock()) {
     ses.setPermissionCheckHandler(() => false);
     protocol.handle(APP_SCHEME, handleAppRequest);
     buildMenu();
-    createMainWindow();
+    createLauncher();
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+      if (BrowserWindow.getAllWindows().length === 0) createLauncher();
     });
   });
 

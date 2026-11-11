@@ -1,3 +1,4 @@
+import { FakeSaleDeskRepository } from './fake-sale-desk-repository.js';
 import { FakeAdminRepository } from './fake-admin-repository.js';
 import { randomUUID } from 'node:crypto';
 import { buildLedger, summariseOutstanding } from '../../src/services/ledger.js';
@@ -1407,6 +1408,7 @@ export interface FakeRepositories extends Repositories {
   employees: FakeEmployeeRepository;
   reports: FakeReportRepository;
   admin: FakeAdminRepository;
+  saleDesk: FakeSaleDeskRepository;
 }
 
 export const createFakeRepositories = (): FakeRepositories => {
@@ -1424,6 +1426,7 @@ export const createFakeRepositories = (): FakeRepositories => {
   const sales = new FakeSaleRepository(stores, products, inventoryRepo, auditLogs);
   const vouchers = new FakeVoucherRepository();
   sales.voucherStore = vouchers;
+  const customers = new FakeCustomerRepository(sales, auditLogs);
   const expenses = new FakeExpenseRepository(sales, auditLogs);
   const purchases = new FakePurchaseRepository(
     stores,
@@ -1462,10 +1465,11 @@ export const createFakeRepositories = (): FakeRepositories => {
     purchases,
     sales,
     vouchers,
-    customers: new FakeCustomerRepository(sales, auditLogs),
+    customers,
     expenses,
     employees: new FakeEmployeeRepository(sales, auditLogs),
     reports: new FakeReportRepository(sales, products, categories, inventoryRepo, expenses),
     admin: new FakeAdminRepository(users, roles, stores, auditLogs, sales, expenses),
+    saleDesk: new FakeSaleDeskRepository(sales, stores, users, customers, auditLogs),
   };
 };

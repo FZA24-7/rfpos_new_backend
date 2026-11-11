@@ -1,0 +1,35 @@
+RETAIL-POS  SALE MENU PATCH   (apply after Fixes, Final-POS and Launcher patches)
+
+WHAT IS NEW
+ A "Sale" drop-down in the top menu with: Daily Cash Activity, Point of Sale,
+ Daily Sales Report, Cash and Credit Card Update, FBR Repost Period,
+ Bill Wise Sales, Sales Person Wise Sales Report, User PC Serial.
+ (Gift Voucher is NOT included.) POS moved from the top bar into this menu.
+
+INSTALL
+ 1. Unzip this patch over your project root (allow overwrite).
+ 2. pnpm install
+ 3. Apply the database migration (20261110120000_sale_menu) to Supabase:
+      pnpm --filter @mafk/database exec prisma migrate deploy
+ 4. Run the seed so the new Sale permissions reach each client's owner role:
+      pnpm --filter @mafk/database run seed      (use your usual seed command)
+ 5. Sign in as the client admin -> Administrator -> Security File and grant the
+    new Sale rights to other users/roles.
+ 6. pnpm --filter @mafk/shared --filter @mafk/validation --filter @mafk/database run build
+    pnpm --filter @mafk/web run build
+ 7. Redeploy the API to Vercel.
+ 8. pnpm desktop:dist   then install and run the NEW .exe.
+
+PC SERIAL
+ - User PC Serial: pick the User ID, press "Get Serial" (desktop app only: reads
+   the computer's serial), press "Update Serial". From then on that ID can sign in
+   only on that computer - admin, cashier, anyone. A plain browser is refused.
+ - Sign in ON the target PC first, then bind others. "-" or blank clears the lock.
+ - You cannot lock yourself out; changing someone's serial signs them out.
+
+NOTES
+ - "Excel" buttons export CSV (opens in Excel).
+ - FBR Repost: manual entry + CSV export; no live FBR API call.
+ - Reposting recomputes open (not closed) cash sheets only.
+ - Not tested on Windows / the packaged .exe (serial read uses PowerShell/WMI).
+ - Tests: API 354, integration (real PG) 82, web 96, desktop 33 - all pass.

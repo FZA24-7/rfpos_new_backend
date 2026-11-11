@@ -44,6 +44,9 @@ import { createSupplierController } from './controllers/supplier.controller.js';
 import { createPurchaseController } from './controllers/purchase.controller.js';
 import { createSaleController } from './controllers/sale.controller.js';
 import { saleRoutes } from './routes/sale.routes.js';
+import { createSaleDeskController } from './controllers/sale-desk.controller.js';
+import { saleDeskRoutes } from './routes/sale-desk.routes.js';
+import type { SaleDeskService } from '../services/sale-desk.service.js';
 import { authRoutes } from './routes/auth.routes.js';
 import { usersRoutes } from './routes/users.routes.js';
 import { healthRoutes } from './routes/health.routes.js';
@@ -99,6 +102,8 @@ export interface AppDependencies {
   // Administrator module:
   adminSecurityService: AdminSecurityService;
   adminOperationsService: AdminOperationsService;
+  // Sale menu:
+  saleDeskService: SaleDeskService;
 }
 
 export const createApp = (deps: AppDependencies): Express => {
@@ -158,6 +163,10 @@ export const createApp = (deps: AppDependencies): Express => {
   app.use('/api', supplierRoutes(supplierController, deps.accessTokens));
   app.use('/api', purchaseRoutes(purchaseController, deps.accessTokens));
   app.use('/api', saleRoutes(saleController, deps.accessTokens));
+  app.use(
+    '/api',
+    saleDeskRoutes(createSaleDeskController(deps.saleDeskService), deps.accessTokens),
+  );
   app.use(
     '/api',
     businessRoutes(

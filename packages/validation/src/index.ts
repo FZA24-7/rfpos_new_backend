@@ -7,3 +7,4 @@ export * from './purchase.js';
 export * from './sale.js';
 export * from './phase6.js';
 export * from './admin.js';
+export * from './sale-desk.js';

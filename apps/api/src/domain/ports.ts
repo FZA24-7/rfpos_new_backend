@@ -1,4 +1,5 @@
 import type { AdminRepository } from './admin.js';
+import type { SaleDeskRepository } from './sale-desk.js';
 import type {
   ApplyMovementInput,
   ApplyMovementResult,
@@ -283,6 +284,8 @@ export interface Repositories {
   reports: ReportRepository;
   // Administrator module:
   admin: AdminRepository;
+  // Sale menu:
+  saleDesk: SaleDeskRepository;
 }
 
 export type { PlatformStats } from './types.js';

@@ -24,6 +24,7 @@ import { ReportService } from '../../src/services/report.service.js';
 import { SupplierService } from '../../src/services/supplier.service.js';
 import { PurchaseService } from '../../src/services/purchase.service.js';
 import { SaleService } from '../../src/services/sale.service.js';
+import { SaleDeskService } from '../../src/services/sale-desk.service.js';
 import { PasswordHasher } from '../../src/security/password.js';
 import { JoseAccessTokenService } from '../../src/security/jwt.js';
 import { createLogger } from '../../src/logger.js';
@@ -95,6 +96,7 @@ export const buildTestApp = (scenario: Scenario, trustProxy?: number): Express =
     supplierService,
     purchaseService,
     saleService,
+    saleDeskService: new SaleDeskService(scenario.repos),
     customerService,
     expenseService,
     employeeService,

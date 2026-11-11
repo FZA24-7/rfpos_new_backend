@@ -11,6 +11,8 @@ export interface AuthUser {
   displayName: string;
   status: 'ACTIVE' | 'DISABLED';
   passwordHash: string;
+  /** Sale > User PC Serial: when set, sign-in is only accepted from the PC with this serial. */
+  pcSerial?: string | null;
 }
 
 export interface TenantSummary {

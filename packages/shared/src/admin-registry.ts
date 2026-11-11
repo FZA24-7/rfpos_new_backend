@@ -169,6 +169,27 @@ export const ADMIN_REGISTRY: readonly AdminModule[] = [
         access: ['sales.view', 'sales.print', 'sale_returns.view', 'sale_returns.print'],
         add: ['sale.refund'],
       }),
+      form('CASH_ACTIVITY', 'DAILY CASH ACTIVITY', {
+        access: ['cash_activity.view'],
+        add: ['cash_activity.create'],
+        edit: ['cash_activity.edit'],
+        delete: ['cash_activity.delete'],
+      }),
+      report('DAILY_CLOSING', 'DAILY SALES REPORT', 'sale_reports.daily_closing'),
+      form('CARD_UPDATE', 'CASH AND CREDIT CARD UPDATE', {
+        access: ['card_update.view'],
+        edit: ['card_update.edit'],
+      }),
+      form('FBR_REPOST', 'FBR REPOST PERIOD', {
+        access: ['fbr_repost.view'],
+        edit: ['fbr_repost.edit'],
+      }),
+      report('BILL_WISE', 'BILL WISE SALES', 'sale_reports.bill_wise'),
+      report('SALES_PERSON_WISE', 'SALES PERSON WISE SALES REPORT', 'sale_reports.sales_person'),
+      form('PC_SERIAL', 'USER PC SERIAL', {
+        access: ['pc_serial.view'],
+        edit: ['pc_serial.edit'],
+      }),
       report('SALES_SUMMARY', 'SALES SUMMARY', 'reports.sales_summary'),
       report('DAILY_SALES', 'DAILY SALES', 'reports.daily'),
       report('HOURLY_SALES', 'SALES BY HOUR', 'reports.hourly'),

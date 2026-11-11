@@ -68,6 +68,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setAccessToken(null);
       setUser(null);
       setStatus('unauthenticated');
+      // In the desktop shell the sign-in screen is the round badge: close the app window and bring it back.
+      void window.mafkDesktop?.showLauncher?.();
     }
   }, []);
 

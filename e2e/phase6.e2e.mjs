@@ -110,7 +110,15 @@ const page = await context.newPage();
 const consoleErrors = [];
 page.on('pageerror', (e) => consoleErrors.push(String(e)));
 page.on('dialog', (d) => void d.accept());
-const nav = (name) => page.getByRole('button', { name, exact: true }).click();
+const nav = async (name) => {
+  // POS lives in the Sale drop-down menu.
+  if (name === 'POS') {
+    await page.getByRole('button', { name: 'Sale', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Point of Sale' }).click();
+    return;
+  }
+  await page.getByRole('button', { name, exact: true }).click();
+};
 const money = (s) => (s.match(/-?\d[\d,]*\.\d{2}/)?.[0] ?? '').replace(/,/g, '');
 
 try {

@@ -1,3 +1,4 @@
+import { pcSerialOf } from '../pc-serial.js';
 import type { CookieOptions, Request, Response } from 'express';
 import type { LoginInput } from '@mafk/validation';
 import type { AuthService } from '../../services/auth.service.js';
@@ -21,6 +22,7 @@ const refreshCookieOptions = (config: AuthControllerConfig): CookieOptions => ({
 const clientMeta = (req: Request) => ({
   ipAddress: req.ip ?? null,
   userAgent: req.header('user-agent') ?? null,
+  pcSerial: pcSerialOf(req),
 });
 
 export const createAuthController = (authService: AuthService, config: AuthControllerConfig) => ({
@@ -36,7 +38,7 @@ export const createAuthController = (authService: AuthService, config: AuthContr
     if (!token) {
       throw new DomainError('SESSION_REVOKED', 'No active session.', 401);
     }
-    const result = await authService.refresh(token);
+    const result = await authService.refresh(token, pcSerialOf(req));
     res.cookie(REFRESH_COOKIE_NAME, result.refreshToken, refreshCookieOptions(config));
     res.status(200).json({ accessToken: result.accessToken });
   },

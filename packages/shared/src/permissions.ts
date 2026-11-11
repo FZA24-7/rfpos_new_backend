@@ -81,6 +81,22 @@ export const REPORT_PERMISSIONS = [
   'reports.payables',
 ] as const;
 
+/** Sale-menu forms (Daily Cash Activity, Cash and Credit Card Update, FBR Repost Period, User PC Serial). */
+export const SALE_DESK_RESOURCES = [
+  'cash_activity',
+  'card_update',
+  'fbr_repost',
+  'pc_serial',
+] as const;
+export const SALE_DESK_ACTIONS = ['view', 'create', 'edit', 'delete'] as const;
+
+/** One permission per Sale-menu report. Kept apart from REPORT_PERMISSIONS (those open the Reports page). */
+export const SALE_REPORT_PERMISSIONS = [
+  'sale_reports.daily_closing',
+  'sale_reports.bill_wise',
+  'sale_reports.sales_person',
+] as const;
+
 const adminGrid = (): string[] =>
   ADMIN_FORM_RESOURCES.flatMap((r) => ADMIN_FORM_ACTIONS.map((a) => `${r}.${a}`));
 
@@ -97,6 +113,8 @@ export const PERMISSION_CATALOG: readonly string[] = Array.from(
     ...SPECIAL_PERMISSIONS,
     ...adminGrid(),
     ...REPORT_PERMISSIONS,
+    ...SALE_DESK_RESOURCES.flatMap((r) => SALE_DESK_ACTIONS.map((a) => `${r}.${a}`)),
+    ...SALE_REPORT_PERMISSIONS,
   ]),
 );
 export type PermissionKey = string;

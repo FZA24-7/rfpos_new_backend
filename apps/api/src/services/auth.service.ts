@@ -1,4 +1,4 @@
-import { normalizeLoginId, PERMISSION_CATALOG } from '@mafk/shared';
+import { normalizeLoginId, normalizePcSerial, PERMISSION_CATALOG } from '@mafk/shared';
 import type { Repositories } from '../domain/ports.js';
 import { DomainError } from '../domain/types.js';
 import type { PasswordHasher } from '../security/password.js';
@@ -15,6 +15,8 @@ export interface AuthServiceConfig {
 export interface RequestMeta {
   ipAddress: string | null;
   userAgent: string | null;
+  /** Serial of the PC the request comes from (header added by the desktop app); null in a plain browser. */
+  pcSerial?: string | null;
 }
 
 export interface LoginResult {
@@ -34,6 +36,12 @@ export interface LoginResult {
 }
 
 const PERMISSION_KEY_SET = new Set(PERMISSION_CATALOG);
+
+export const PC_NOT_ALLOWED_MESSAGE =
+  'This ID is registered to another computer and cannot sign in from this one.';
+/** A user bound to a PC serial may only sign in (or keep a session) from exactly that PC. */
+export const pcAllowed = (bound: string | null | undefined, presented: string | null | undefined) =>
+  !bound || normalizePcSerial(presented) === normalizePcSerial(bound);
 
 export class AuthService {
   constructor(
@@ -130,6 +138,18 @@ export class AuthService {
       throw new DomainError('INVALID_CREDENTIALS', 'Invalid Login ID or password.', 401);
     }
 
+    if (!pcAllowed(user.pcSerial, meta.pcSerial)) {
+      await this.repos.loginAttempts.record({
+        loginId,
+        userId: user.id,
+        tenantId: user.tenantId,
+        ...meta,
+        success: false,
+        failureReason: 'PC_NOT_ALLOWED',
+      });
+      throw new DomainError('PC_NOT_ALLOWED', PC_NOT_ALLOWED_MESSAGE, 403);
+    }
+
     const role = await this.repos.roles.findById(user.roleId, user.tenantId);
     if (!role) {
       throw new DomainError('INTERNAL_ERROR', 'User role could not be resolved.', 500);
@@ -194,7 +214,10 @@ export class AuthService {
     return tenant ? { code: tenant.code, name: tenant.name } : null;
   }
 
-  async refresh(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+  async refresh(
+    refreshToken: string,
+    pcSerial?: string | null,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const hash = hashRefreshToken(refreshToken);
     const session = await this.repos.sessions.findByRefreshTokenHash(hash);
     if (!session || session.revokedAt || session.expiresAt.getTime() < this.now().getTime()) {
@@ -218,6 +241,9 @@ export class AuthService {
       if (!tenant || tenant.status !== 'ACTIVE') {
         throw new DomainError('TENANT_SUSPENDED', 'This account is currently unavailable.', 403);
       }
+    }
+    if (!pcAllowed(user.pcSerial, pcSerial)) {
+      throw new DomainError('PC_NOT_ALLOWED', PC_NOT_ALLOWED_MESSAGE, 403);
     }
 
     const role = await this.repos.roles.findById(user.roleId, user.tenantId);

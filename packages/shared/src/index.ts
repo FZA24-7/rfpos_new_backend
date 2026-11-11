@@ -10,3 +10,4 @@ export * from './purchase-math.js';
 export * from './sale-math.js';
 export * from './tz.js';
 export * from './admin-registry.js';
+export * from './sale-desk.js';

@@ -35,6 +35,7 @@ const toAuthUser = (row: {
   displayName: string;
   status: string;
   passwordHash: string;
+  pcSerial?: string | null;
   role: { systemRole: string };
 }): AuthUser => ({
   id: row.id,
@@ -45,6 +46,7 @@ const toAuthUser = (row: {
   loginId: row.loginId,
   displayName: row.displayName,
   status: row.status as AuthUser['status'],
+  pcSerial: row.pcSerial ?? null,
   passwordHash: row.passwordHash,
 });
 

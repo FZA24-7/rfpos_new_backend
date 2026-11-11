@@ -146,6 +146,7 @@ model Tenant {
   supplierPayments  SupplierPayment[]
   sales             Sale[]
   vouchers          Voucher[]
+  cashActivities    CashActivity[]
   saleItems         SaleItem[]
   payments          Payment[]
   saleReturns       SaleReturn[]
@@ -173,11 +174,13 @@ model Store {
   address   String?
   phone     String?
   isDefault Boolean  @default(false)
+  region    String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   tenant            Tenant              @relation(fields: [tenantId], references: [id])
+  cashActivities    CashActivity[]
   users             User[]
   devices           Device[]
   inventories       Inventory[]
@@ -299,6 +302,8 @@ model User {
   passwordHash       String
   status             UserStatus @default(ACTIVE)
   mustChangePassword Boolean    @default(false)
+  /// Sale > User PC Serial: when set, this ID can only sign in from the PC with exactly this serial.
+  pcSerial           String?
   passwordChangedAt  DateTime?
   lastLoginAt        DateTime?
   createdById        String?
@@ -1063,18 +1068,18 @@ enum VoucherStatus {
 
 /// A discount voucher or a credit memo: a code worth `balance`, redeemed (fully or partly) against a sale.
 model Voucher {
-  id          String        @id @default(cuid())
-  tenantId    String
-  code        String
-  kind        VoucherKind
-  amount      Decimal       @db.Decimal(18, 2)
-  balance     Decimal       @db.Decimal(18, 2)
-  status      VoucherStatus @default(ACTIVE)
-  expiresAt   DateTime?
-  note        String?
-  issuedById  String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id         String        @id @default(cuid())
+  tenantId   String
+  code       String
+  kind       VoucherKind
+  amount     Decimal       @db.Decimal(18, 2)
+  balance    Decimal       @db.Decimal(18, 2)
+  status     VoucherStatus @default(ACTIVE)
+  expiresAt  DateTime?
+  note       String?
+  issuedById String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
@@ -1082,4 +1087,47 @@ model Voucher {
   @@unique([id, tenantId])
   @@index([tenantId, kind, status])
   @@map("vouchers")
+}
+
+// ───────────────────────────── Sale menu ─────────────────────────────
+
+/// Daily Cash Activity: one sheet per shop per business day. All money figures are computed by the API from the day's
+/// bills and the detail lines; `closed` locks the sheet (and Cash/Card Update of that day's bills).
+model CashActivity {
+  id               String    @id @default(cuid())
+  tenantId         String
+  storeId          String
+  businessDate     String // YYYY-MM-DD in the tenant's time zone
+  openingPettyCash Decimal   @default(0) @db.Decimal(18, 2)
+  receivePettyCash Decimal   @default(0) @db.Decimal(18, 2)
+  totalExpense     Decimal   @default(0) @db.Decimal(18, 2)
+  closingPettyCash Decimal   @default(0) @db.Decimal(18, 2)
+  creditCardSales  Decimal   @default(0) @db.Decimal(18, 2)
+  onAccountSales   Decimal   @default(0) @db.Decimal(18, 2)
+  cashSales        Decimal   @default(0) @db.Decimal(18, 2)
+  redemptionAmount Decimal   @default(0) @db.Decimal(18, 2)
+  totalSales       Decimal   @default(0) @db.Decimal(18, 2)
+  openingCash      Decimal   @default(0) @db.Decimal(18, 2)
+  adjustment       Decimal   @default(0) @db.Decimal(18, 2)
+  totalAvailable   Decimal   @default(0) @db.Decimal(18, 2)
+  depositedCash    Decimal   @default(0) @db.Decimal(18, 2)
+  netAvailable     Decimal   @default(0) @db.Decimal(18, 2)
+  expenseLines     Json      @default("[]")
+  receiptLines     Json      @default("[]")
+  transferLines    Json      @default("[]")
+  terminalLines    Json      @default("[]")
+  voucherNo        String?
+  closed           Boolean   @default(false)
+  closedAt         DateTime?
+  closedById       String?
+  createdById      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  store  Store  @relation(fields: [storeId, tenantId], references: [id, tenantId])
+
+  @@unique([tenantId, storeId, businessDate])
+  @@index([tenantId, businessDate])
+  @@map("cash_activities")
 }

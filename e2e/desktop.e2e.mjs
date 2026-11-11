@@ -102,13 +102,15 @@ const app = await electron.launch({
 });
 
 try {
-  const page = await app.firstWindow();
+  // The first window is the round sign-in badge (the app window only opens after a successful sign-in).
+  let page = await app.firstWindow();
   const pageErrors = [];
   page.on('pageerror', (e) => pageErrors.push(String(e)));
 
   console.log('Shell and isolation');
-  await page.getByLabel('Login ID', { exact: true }).waitFor({ timeout: 30_000 });
+  await page.getByLabel('User name', { exact: true }).waitFor({ timeout: 30_000 });
   eq('UI is served from the private app scheme', originOf(page.url()), 'mafk-app://local');
+  check('the first screen is the sign-in badge', page.url().endsWith('/launcher'), page.url());
   const iso = await page.evaluate(() => ({
     bridge: window.mafkDesktop?.isDesktop,
     apiBase: window.mafkDesktop?.apiBase,
@@ -123,7 +125,7 @@ try {
   eq(
     'bridge exposes only the fixed API',
     iso.keys.join(','),
-    'apiBase,closeSettings,getInfo,isDesktop,openSettings,setServer',
+    'apiBase,appReady,closeSettings,getInfo,getSerial,isDesktop,launchApp,openSettings,quit,setServer,showLauncher',
   );
 
   const headers = await page.evaluate(async () => {
@@ -190,11 +192,24 @@ try {
   );
 
   console.log('Sign in through the proxy');
-  await page.getByLabel('Login ID', { exact: true }).fill(adminLogin);
-  await page.getByLabel('Password', { exact: true }).fill(adminPassword);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await page.getByRole('button', { name: 'Customers', exact: true }).waitFor();
-  check('signed in; the Phase 6 navigation is visible', true);
+  const badge = page;
+  await badge.getByLabel('Client', { exact: true }).fill(`DSK${run.toUpperCase()}`);
+  await badge.getByLabel('User name', { exact: true }).fill(adminLogin);
+  await badge.getByLabel('Password', { exact: true }).fill(adminPassword);
+  await badge.getByRole('button', { name: 'Login' }).click();
+  let appWindow;
+  const opened2 = Date.now() + 30_000;
+  while (!appWindow && Date.now() < opened2) {
+    appWindow = app
+      .windows()
+      .find((w) => w.url().startsWith('mafk-app://local') && !w.url().endsWith('/launcher'));
+    if (!appWindow) await new Promise((r) => setTimeout(r, 200));
+  }
+  check('the app window opens after the badge accepted the credentials', Boolean(appWindow));
+  page = appWindow;
+  page.on('pageerror', (e) => pageErrors.push(String(e)));
+  await page.getByRole('button', { name: 'Customers', exact: true }).waitFor({ timeout: 30_000 });
+  check('signed in without a second login; the Phase 6 navigation is visible', true);
 
   console.log('A Phase 6 screen inside the desktop app');
   await page.getByRole('button', { name: 'Customers', exact: true }).click();
@@ -275,8 +290,17 @@ try {
     .getByRole('button', { name: /sign out|log out/i })
     .first()
     .click();
-  await page.getByLabel('Login ID', { exact: true }).waitFor({ timeout: 20_000 });
-  check('signed out back to the login page', true);
+  page = await (async () => {
+    const until = Date.now() + 20_000;
+    for (;;) {
+      const b = app.windows().find((w) => w.url().endsWith('/launcher'));
+      if (b) return b;
+      if (Date.now() > until) throw new Error('the sign-in badge did not come back after sign out');
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  })();
+  await page.getByLabel('Password', { exact: true }).waitFor({ timeout: 20_000 });
+  check('signed out back to the sign-in badge', true);
 
   // Last on purpose: a deliberately cancelled navigation leaves Playwright waiting for a navigation that never commits.
   await page.evaluate(() => {
@@ -296,7 +320,9 @@ try {
         .catch(() => undefined);
   }
 } finally {
-  await app.close().catch(() => undefined);
+  // Never hang here: a window that was left on a blocked navigation can keep close() waiting.
+  await Promise.race([app.close().catch(() => undefined), new Promise((r) => setTimeout(r, 8000))]);
+  app.process().kill('SIGKILL');
   rmSync(userData, { recursive: true, force: true });
 }
 

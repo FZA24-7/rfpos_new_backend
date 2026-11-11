@@ -24,8 +24,18 @@
   #invoice-print,
   #invoice-print *,
   #receipt-print,
-  #receipt-print * {
+  #receipt-print *,
+  #desk-print,
+  #desk-print * {
     visibility: visible;
+  }
+  #desk-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: #fff;
+    color: #000;
   }
   #receipt-print {
     position: absolute;
@@ -117,5 +127,297 @@
   }
   .splash-leave {
     transform: none;
+  }
+}
+
+/* Desktop sign-in badge (see desktop/DesktopLauncher.tsx). The shell window is transparent, so the page must be too. */
+html.launcher-mode,
+html.launcher-mode body,
+html.launcher-mode #root {
+  background: transparent !important;
+  overflow: hidden;
+}
+.launcher-stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+.launcher-badge {
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  padding: 14px;
+  background: conic-gradient(
+    from 210deg,
+    #f4f6fb,
+    #9aa3b5,
+    #ffffff,
+    #7d8699,
+    #e9edf5,
+    #8f98ab,
+    #f4f6fb
+  );
+  box-shadow:
+    0 26px 60px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+  animation: launcher-pop 0.85s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.launcher-face {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at 30% 18%, #1d2c80 0%, #0b1240 55%, #050816 100%);
+  box-shadow: inset 0 0 46px rgba(0, 0, 0, 0.75);
+}
+.launcher-logo {
+  position: absolute;
+  left: 50%;
+  top: 7%;
+  width: 84%;
+  transform: translateX(-50%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 46%, #000 52%, transparent 90%);
+  mask-image: radial-gradient(ellipse at 50% 46%, #000 52%, transparent 90%);
+  pointer-events: none;
+  animation: splash-glow 1.8s ease-in-out 0.9s infinite alternate;
+}
+.launcher-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 62%
+  );
+  transform: translateX(-120%);
+  animation: launcher-sweep 2.6s ease-in-out 1s infinite;
+}
+.launcher-panel {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  width: 292px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  -webkit-app-region: no-drag;
+  animation: launcher-rise 0.6s ease-out 0.7s both;
+}
+.launcher-row {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  align-items: center;
+  gap: 6px;
+  color: #cfe3ff;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+}
+.launcher-row input {
+  width: 100%;
+  height: 26px;
+  padding: 0 8px;
+  font-size: 13px;
+  color: #0b1240;
+  background: #fff;
+  border: 1px solid #8aa4d6;
+  border-radius: 3px;
+  outline: none;
+}
+.launcher-row input:focus {
+  box-shadow: 0 0 0 2px rgba(90, 170, 255, 0.7);
+}
+.launcher-row input:disabled {
+  opacity: 0.7;
+}
+.launcher-error {
+  min-height: 16px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  color: #fecaca;
+}
+.launcher-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.launcher-buttons button {
+  min-width: 92px;
+  height: 28px;
+  font-size: 13px;
+  color: #0b1240;
+  background: linear-gradient(#f4f8ff, #b9d2f5);
+  border: 1px solid #7ea0d8;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.launcher-buttons button:hover:not(:disabled) {
+  background: linear-gradient(#ffffff, #cfe2fb);
+}
+.launcher-buttons button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.launcher-link {
+  align-self: center;
+  background: none;
+  border: 0;
+  font-size: 10px;
+  color: #8fb4ee;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.launcher-welcome {
+  align-items: center;
+  text-align: center;
+  bottom: 12%;
+  animation-delay: 0.05s;
+}
+.launcher-dots::after {
+  content: '';
+  animation: launcher-dots 1.2s steps(4) infinite;
+}
+.launcher-unlock {
+  animation: launcher-unlock 1.4s ease-in-out both;
+}
+.launcher-unlock .launcher-logo {
+  animation: launcher-logo-flash 1.1s ease-out both;
+}
+.launcher-unlock .launcher-sweep {
+  animation: launcher-sweep 0.9s ease-in-out both;
+}
+@keyframes launcher-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.55) rotate(-8deg);
+    filter: blur(12px);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.04) rotate(0);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+@keyframes launcher-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 14px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes launcher-sweep {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(120%);
+  }
+}
+@keyframes launcher-unlock {
+  0% {
+    transform: scale(1);
+    box-shadow:
+      0 26px 60px rgba(0, 0, 0, 0.55),
+      0 0 0 0 rgba(90, 190, 255, 0);
+  }
+  55% {
+    transform: scale(1.05);
+    box-shadow:
+      0 26px 60px rgba(0, 0, 0, 0.55),
+      0 0 40px 10px rgba(90, 190, 255, 0.55);
+  }
+  100% {
+    transform: scale(1.06);
+    box-shadow:
+      0 26px 60px rgba(0, 0, 0, 0.55),
+      0 0 60px 18px rgba(255, 170, 90, 0.4);
+  }
+}
+@keyframes launcher-logo-flash {
+  0% {
+    filter: brightness(1);
+  }
+  40% {
+    filter: brightness(1.6) drop-shadow(0 0 22px rgba(120, 200, 255, 0.9));
+  }
+  100% {
+    filter: brightness(1.15) drop-shadow(0 0 16px rgba(255, 170, 90, 0.6));
+  }
+}
+@keyframes launcher-dots {
+  0% {
+    content: '';
+  }
+  25% {
+    content: '.';
+  }
+  50% {
+    content: '..';
+  }
+  75% {
+    content: '...';
+  }
+}
+/* The app fades/zooms in after sign-in (desktop shell only). */
+.app-reveal {
+  animation: app-reveal 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+}
+@keyframes app-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .launcher-badge,
+  .launcher-logo,
+  .launcher-sweep,
+  .launcher-panel,
+  .launcher-unlock,
+  .launcher-unlock .launcher-logo,
+  .launcher-unlock .launcher-sweep,
+  .app-reveal {
+    animation: none;
+  }
+}
+
+/* Sale menu windows */
+@keyframes desk-window-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.desk-window-in {
+  animation: desk-window-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-window-in {
+    animation: none;
   }
 }

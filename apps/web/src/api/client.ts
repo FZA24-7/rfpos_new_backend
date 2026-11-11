@@ -2,6 +2,16 @@
 interface DesktopBridge {
   isDesktop: true;
   apiBase: string;
+  getSerial?: () => Promise<string | null>;
+  openSettings?: () => Promise<void>;
+  /** Sign-in badge: open the app once the credentials were accepted. */
+  launchApp?: () => Promise<void>;
+  /** App: go back to the sign-in badge after signing out. */
+  showLauncher?: () => Promise<void>;
+  /** Sign-in badge: close the software. */
+  quit?: () => Promise<void>;
+  /** App: tell the shell the signed-in app is ready to be shown. */
+  appReady?: () => void;
 }
 declare global {
   interface Window {

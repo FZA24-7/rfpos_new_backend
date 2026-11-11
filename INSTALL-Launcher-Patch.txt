@@ -1,0 +1,21 @@
+MAFK Retail-Flow POS - Launcher (round sign-in badge) patch
+============================================================
+Apply AFTER: Fixes patch -> Final POS patch. No database change.
+
+1. Unzip this patch over your project root (same folder names, overwrite when asked).
+2. In the project root run:
+     pnpm install
+     pnpm --filter @mafk/web run build
+     pnpm desktop:dist
+3. Install/run the NEW .exe from apps/desktop/release (the old installed .exe
+   has the old screens baked in and will not update itself).
+
+What the user sees
+- Double-click .exe -> round badge pops up (Client, User Name, Password, Login / Exit).
+- Wrong password: message shown, stays on the badge.
+- Correct login: "Welcome" unlock animation, then the badge cross-fades into the
+  full software, already signed in.
+- Sign out in the app brings the badge back. Exit closes the app.
+- "Server settings" link on the badge changes the server address.
+
+Optional check: pnpm --filter @mafk/web test

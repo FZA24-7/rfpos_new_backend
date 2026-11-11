@@ -33,6 +33,7 @@ import {
 import { PrismaAdminRepository } from './admin-repositories.js';
 import { PrismaReportRepository } from './report-repositories.js';
 import { PrismaVoucherRepository } from './voucher-repositories.js';
+import { PrismaSaleDeskRepository } from './sale-desk-repositories.js';
 import { PrismaSaleRepository } from './sale-repositories.js';
 import { PrismaPurchaseRepository, PrismaSupplierRepository } from './purchase-repositories.js';
 
@@ -63,4 +64,5 @@ export const createPrismaRepositories = (prisma: PrismaClient): Repositories => 
   employees: new PrismaEmployeeRepository(prisma),
   reports: new PrismaReportRepository(prisma),
   admin: new PrismaAdminRepository(prisma),
+  saleDesk: new PrismaSaleDeskRepository(prisma),
 });

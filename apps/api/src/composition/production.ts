@@ -28,6 +28,7 @@ import { ReportService } from '../services/report.service.js';
 import { SupplierService } from '../services/supplier.service.js';
 import { PurchaseService } from '../services/purchase.service.js';
 import { SaleService } from '../services/sale.service.js';
+import { SaleDeskService } from '../services/sale-desk.service.js';
 import { AdminSecurityService } from '../services/admin-security.service.js';
 import { AdminOperationsService } from '../services/admin-operations.service.js';
 import { createApp } from '../http/app.js';
@@ -64,6 +65,7 @@ export const buildProductionApp = (env: Env, logger: Logger, poolMax?: number) =
   const supplierService = new SupplierService(repos);
   const purchaseService = new PurchaseService(repos);
   const saleService = new SaleService(repos);
+  const saleDeskService = new SaleDeskService(repos);
   const customerService = new CustomerService(repos);
   const expenseService = new ExpenseService(repos);
   const employeeService = new EmployeeService(repos);
@@ -94,6 +96,7 @@ export const buildProductionApp = (env: Env, logger: Logger, poolMax?: number) =
     supplierService,
     purchaseService,
     saleService,
+    saleDeskService,
     customerService,
     expenseService,
     employeeService,
