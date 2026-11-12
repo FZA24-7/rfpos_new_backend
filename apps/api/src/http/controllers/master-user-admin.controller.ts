@@ -31,7 +31,7 @@ export const createMasterUserAdminController = (
     if (!req.auth) throw new DomainError('UNAUTHENTICATED', 'Authentication required.', 401);
     const tenantId = params(req).id;
     await security.assertTenantExists(tenantId);
-    return { id: req.auth.userId, tenantId, permissions: ALL_TENANT_GRANTS };
+    return { id: req.auth.userId, tenantId, permissions: ALL_TENANT_GRANTS, platform: true };
   };
 
   return {

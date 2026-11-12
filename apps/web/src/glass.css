@@ -1,0 +1,568 @@
+/*
+ * FZA "3D glass" look for everything AFTER sign-in (modules, forms, reports, Sale windows, dialogs).
+ * Scope: only inside `.fza-app` (the Shell). The opening splash and the round sign-in badge are not touched.
+ * Pure styling: no layout, no behaviour. Works in dark and light mode.
+ */
+
+.fza-app {
+  /* dark (default) tokens */
+  --g-panel: linear-gradient(150deg, rgba(34, 48, 102, 0.58) 0%, rgba(12, 19, 48, 0.62) 100%);
+  --g-panel-solid: rgba(14, 22, 52, 0.9);
+  --g-menu: linear-gradient(160deg, #16245a 0%, #0b1334 100%);
+  --g-inner: rgba(120, 150, 255, 0.07);
+  --g-border: rgba(138, 168, 255, 0.2);
+  --g-border-soft: rgba(138, 168, 255, 0.12);
+  --g-hi: rgba(255, 255, 255, 0.16);
+  --g-shadow:
+    0 18px 40px -12px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 var(--g-hi),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+  --g-field: rgba(6, 11, 32, 0.6);
+  --g-field-border: rgba(138, 168, 255, 0.28);
+  --g-text-glow: rgba(120, 170, 255, 0.35);
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  background:
+    radial-gradient(1100px 600px at 12% -8%, rgba(46, 96, 255, 0.28), transparent 60%),
+    radial-gradient(900px 520px at 100% 8%, rgba(0, 190, 255, 0.16), transparent 62%),
+    radial-gradient(900px 600px at 60% 110%, rgba(120, 60, 255, 0.18), transparent 60%),
+    linear-gradient(180deg, #04081c 0%, #060c26 55%, #050a1e 100%);
+  background-attachment: fixed;
+}
+html:not(.dark) .fza-app {
+  --g-panel: linear-gradient(150deg, rgba(255, 255, 255, 0.82) 0%, rgba(232, 240, 255, 0.62) 100%);
+  --g-panel-solid: rgba(255, 255, 255, 0.94);
+  --g-menu: linear-gradient(160deg, #ffffff 0%, #e9f0ff 100%);
+  --g-inner: rgba(60, 100, 220, 0.06);
+  --g-border: rgba(255, 255, 255, 0.9);
+  --g-border-soft: rgba(60, 100, 200, 0.14);
+  --g-hi: rgba(255, 255, 255, 0.95);
+  --g-shadow:
+    0 18px 38px -14px rgba(40, 70, 160, 0.35), 0 2px 5px rgba(40, 70, 160, 0.12),
+    inset 0 1px 0 var(--g-hi), inset 0 -1px 0 rgba(60, 100, 200, 0.12);
+  --g-field: rgba(255, 255, 255, 0.85);
+  --g-field-border: rgba(60, 100, 200, 0.28);
+  --g-text-glow: rgba(60, 100, 220, 0.2);
+  background:
+    radial-gradient(1100px 600px at 10% -10%, rgba(120, 160, 255, 0.45), transparent 60%),
+    radial-gradient(900px 520px at 100% 0%, rgba(120, 220, 255, 0.35), transparent 62%),
+    radial-gradient(900px 600px at 60% 110%, rgba(190, 160, 255, 0.35), transparent 60%),
+    linear-gradient(180deg, #eaf0ff 0%, #dfe8fb 100%);
+  background-attachment: fixed;
+}
+
+/* floating glow orbs behind the glass (they sit under the content) */
+.fza-app::before,
+.fza-app::after {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  width: 38vmax;
+  height: 38vmax;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+.fza-app::before {
+  left: -12vmax;
+  top: 18vh;
+  background: radial-gradient(circle, rgba(40, 110, 255, 0.55), transparent 65%);
+  animation: fza-drift-a 26s ease-in-out infinite alternate;
+}
+.fza-app::after {
+  right: -14vmax;
+  bottom: -10vmax;
+  background: radial-gradient(circle, rgba(0, 200, 255, 0.4), transparent 65%);
+  animation: fza-drift-b 32s ease-in-out infinite alternate;
+}
+html:not(.dark) .fza-app::before,
+html:not(.dark) .fza-app::after {
+  opacity: 0.4;
+}
+@keyframes fza-drift-a {
+  to {
+    transform: translate3d(9vmax, -6vmax, 0) scale(1.15);
+  }
+}
+@keyframes fza-drift-b {
+  to {
+    transform: translate3d(-8vmax, 7vmax, 0) scale(1.1);
+  }
+}
+
+/* ── top bar ─────────────────────────────────────────────────────────────── */
+.fza-app .fza-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: linear-gradient(180deg, rgba(24, 36, 84, 0.72), rgba(8, 14, 38, 0.66));
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  backdrop-filter: blur(22px) saturate(1.5);
+  border-bottom: 1px solid var(--g-border);
+  box-shadow:
+    0 14px 34px -14px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+html:not(.dark) .fza-app .fza-header {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(230, 238, 255, 0.7));
+  box-shadow:
+    0 12px 28px -14px rgba(40, 70, 160, 0.4),
+    inset 0 1px 0 #fff;
+}
+.fza-app .fza-header p[class~='text-slate-900'] {
+  background: linear-gradient(90deg, #ffffff, #9fc2ff 70%, #6ad7ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 0.02em;
+  text-shadow: none;
+  font-weight: 700;
+}
+html:not(.dark) .fza-app .fza-header p[class~='text-slate-900'] {
+  background: linear-gradient(90deg, #14308a, #2c56c9 70%, #0e7fb5);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.fza-logo {
+  width: 2.4rem;
+  height: 2.4rem;
+  object-fit: contain;
+  border-radius: 0.7rem;
+  filter: drop-shadow(0 0 10px rgba(60, 140, 255, 0.65));
+  transition: transform 0.35s ease;
+}
+.fza-logo:hover {
+  transform: rotate(-6deg) scale(1.08);
+}
+
+/* ── panels: every white / dark surface becomes frosted glass ───────────── */
+.fza-app
+  :is(div, section, article, aside, form, header, footer, fieldset, dialog)[class~='bg-white'],
+.fza-app
+  :is(div, section, article, aside, form, header, footer, fieldset, dialog)[class~='bg-slate-50'],
+.fza-app
+  :is(
+    div,
+    section,
+    article,
+    aside,
+    form,
+    header,
+    footer,
+    fieldset,
+    dialog
+  )[class~='dark:bg-slate-900'],
+.fza-app .glass-card {
+  background: var(--g-panel);
+  -webkit-backdrop-filter: blur(18px) saturate(1.45);
+  backdrop-filter: blur(18px) saturate(1.45);
+  border-color: var(--g-border);
+  box-shadow: var(--g-shadow);
+}
+/* the top bar is a panel too, but keeps its own look */
+.fza-app header.fza-header {
+  background: linear-gradient(180deg, rgba(24, 36, 84, 0.72), rgba(8, 14, 38, 0.66));
+}
+html:not(.dark) .fza-app header.fza-header {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(230, 238, 255, 0.7));
+}
+
+/* secondary surfaces inside panels (table heads, grouped rows, chips) */
+.fza-app :is(div, section, thead, tr, th, td, tfoot, ul, li, p, span)[class~='bg-slate-100'],
+.fza-app :is(div, section, thead, tr, th, td, tfoot, ul)[class~='dark:bg-slate-800'],
+.fza-app :is(div, section, thead, tr, th, td, tfoot, ul)[class~='bg-slate-50'] {
+  background: var(--g-inner);
+}
+html.dark .fza-app [class*='border-slate-'],
+html.dark .fza-app [class~='divide-y'] > * {
+  border-color: var(--g-border-soft);
+}
+html:not(.dark) .fza-app [class*='border-slate-'] {
+  border-color: var(--g-border-soft);
+}
+
+/* glossy sheen on large panels */
+.fza-app .glass-card,
+.fza-app section.desk-window {
+  position: relative;
+}
+.fza-app .glass-card::before,
+.fza-app section.desk-window::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 42%;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent);
+  pointer-events: none;
+}
+.fza-app .glass-card {
+  border-radius: 1rem;
+}
+
+/* ── Sale / desk windows: raised 3D glass window ────────────────────────── */
+.fza-app section.desk-window {
+  border-radius: 1.1rem;
+  border: 1px solid var(--g-border);
+  transform-style: preserve-3d;
+  box-shadow:
+    0 30px 60px -20px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 40px -10px rgba(60, 120, 255, 0.35),
+    inset 0 1px 0 var(--g-hi),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+html:not(.dark) .fza-app section.desk-window {
+  box-shadow:
+    0 30px 55px -22px rgba(40, 70, 160, 0.45),
+    0 0 36px -12px rgba(60, 120, 255, 0.3),
+    inset 0 1px 0 #fff;
+}
+.fza-app section.desk-window > header {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(90deg, #0a1a52 0%, #1b3fae 55%, #2a7bff 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 6px 16px -8px rgba(10, 30, 120, 0.8);
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+.fza-app section.desk-window > header h2 {
+  text-shadow: 0 1px 8px rgba(120, 180, 255, 0.7);
+  letter-spacing: 0.04em;
+}
+.fza-app section.desk-window > header > span {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.1));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.fza-app section.desk-window > footer {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.18));
+  border-top: 1px solid var(--g-border-soft);
+}
+
+/* toolbar keycaps (icon tiles) */
+.fza-app section.desk-window button span[class*='bg-gradient-to-b'] {
+  box-shadow:
+    0 8px 14px -6px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.04)),
+    linear-gradient(180deg, rgba(90, 130, 255, 0.35), rgba(30, 60, 160, 0.5));
+}
+html:not(.dark) .fza-app section.desk-window button span[class*='bg-gradient-to-b'] {
+  background-image: linear-gradient(180deg, #ffffff, #dfe9ff);
+}
+.fza-app section.desk-window button:enabled:active span[class*='bg-gradient-to-b'] {
+  transform: translateY(2px) scale(0.97);
+  box-shadow:
+    0 2px 5px -2px rgba(0, 0, 0, 0.6),
+    inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* the black LCD figure box: glossy glass tube */
+.fza-app output[class*='bg-black'] {
+  background: linear-gradient(180deg, #02070f, #04111f);
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.9),
+    inset 0 -1px 0 rgba(120, 255, 160, 0.12),
+    0 0 18px -4px rgba(120, 255, 120, 0.35);
+  text-shadow: 0 0 10px rgba(170, 255, 90, 0.8);
+}
+
+/* ── fields: recessed glass ─────────────────────────────────────────────── */
+.fza-app input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+.fza-app select,
+.fza-app textarea {
+  background-color: var(--g-field);
+  border: 1px solid var(--g-field-border);
+  border-radius: 0.6rem;
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.35),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.05);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    background-color 0.15s;
+}
+html:not(.dark)
+  .fza-app
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+html:not(.dark) .fza-app select,
+html:not(.dark) .fza-app textarea {
+  box-shadow:
+    inset 0 2px 4px rgba(40, 70, 160, 0.12),
+    0 1px 0 #fff;
+}
+.fza-app
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):hover,
+.fza-app select:hover,
+.fza-app textarea:hover {
+  border-color: rgba(120, 170, 255, 0.55);
+}
+.fza-app input:focus,
+.fza-app select:focus,
+.fza-app textarea:focus {
+  border-color: #5b9bff;
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.3),
+    0 0 0 3px rgba(80, 140, 255, 0.28),
+    0 0 18px -2px rgba(80, 140, 255, 0.5);
+}
+.fza-app input:disabled,
+.fza-app select:disabled,
+.fza-app textarea:disabled {
+  opacity: 0.62;
+}
+.fza-app option {
+  background: #0b1330;
+  color: #e8eeff;
+}
+html:not(.dark) .fza-app option {
+  background: #fff;
+  color: #10204a;
+}
+.fza-app input[type='checkbox'],
+.fza-app input[type='radio'] {
+  accent-color: #3b82ff;
+}
+.fza-app output[class*='bg-sky-50'] {
+  background: var(--g-inner);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* ── buttons: glossy 3D keys ────────────────────────────────────────────── */
+.fza-app button {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease,
+    background 0.15s ease;
+}
+.fza-app button[class~='bg-brand-600'] {
+  background: linear-gradient(180deg, #6a9bff 0%, #3a68ec 48%, #2548bd 100%);
+  color: #fff;
+  box-shadow:
+    0 10px 20px -8px rgba(37, 72, 189, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    inset 0 -3px 0 rgba(10, 25, 90, 0.35);
+  text-shadow: 0 1px 2px rgba(10, 25, 90, 0.5);
+}
+.fza-app button[class~='bg-red-600'] {
+  background: linear-gradient(180deg, #ff7a7a 0%, #e03a3a 50%, #b02020 100%);
+  box-shadow:
+    0 10px 20px -8px rgba(176, 32, 32, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(90, 10, 10, 0.35);
+}
+.fza-app button[class~='bg-white'],
+.fza-app button[class~='dark:bg-slate-800'],
+.fza-app button[class~='bg-slate-100'] {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04)), var(--g-inner);
+  border-color: var(--g-border);
+  box-shadow:
+    0 6px 14px -8px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 var(--g-hi),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.18);
+}
+html:not(.dark) .fza-app button[class~='bg-white'],
+html:not(.dark) .fza-app button[class~='bg-slate-100'] {
+  background: linear-gradient(180deg, #ffffff, #e8efff);
+  border-color: rgba(60, 100, 200, 0.28);
+  box-shadow:
+    0 6px 12px -8px rgba(40, 70, 160, 0.5),
+    inset 0 1px 0 #fff,
+    inset 0 -2px 0 rgba(60, 100, 200, 0.12);
+}
+.fza-app button:enabled:hover {
+  filter: brightness(1.1) saturate(1.1);
+}
+.fza-app button[class~='bg-brand-600']:enabled:hover,
+.fza-app button[class~='bg-red-600']:enabled:hover,
+.fza-app button[class~='bg-white']:enabled:hover,
+.fza-app button[class~='dark:bg-slate-800']:enabled:hover {
+  transform: translateY(-1px);
+}
+.fza-app button[class~='bg-brand-600']:enabled:active,
+.fza-app button[class~='bg-red-600']:enabled:active,
+.fza-app button[class~='bg-white']:enabled:active,
+.fza-app button[class~='dark:bg-slate-800']:enabled:active {
+  transform: translateY(1px);
+  filter: brightness(0.95);
+  box-shadow:
+    0 2px 6px -2px rgba(0, 0, 0, 0.55),
+    inset 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+.fza-app button:disabled {
+  filter: saturate(0.6);
+}
+
+/* menu bar: glass drop-down */
+.fza-app [role='menu'] {
+  background: var(--g-menu) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  backdrop-filter: blur(22px) saturate(1.6);
+  border: 1px solid var(--g-border) !important;
+  border-radius: 0.9rem !important;
+  padding: 0.35rem !important;
+  box-shadow:
+    0 28px 50px -16px rgba(0, 0, 0, 0.75),
+    0 0 30px -10px rgba(60, 120, 255, 0.4),
+    inset 0 1px 0 var(--g-hi) !important;
+}
+.fza-app [role='menu'] [role='menuitem'] {
+  border-radius: 0.55rem;
+}
+.fza-app [role='menu'] [role='menuitem']:hover {
+  background: linear-gradient(180deg, #5b8cff, #2c56c9) !important;
+  box-shadow: 0 6px 14px -6px rgba(44, 86, 201, 0.9);
+}
+
+/* ── tables ─────────────────────────────────────────────────────────────── */
+.fza-app table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.fza-app thead th {
+  background: linear-gradient(180deg, rgba(120, 160, 255, 0.16), rgba(120, 160, 255, 0.05));
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--g-border);
+  letter-spacing: 0.05em;
+  box-shadow: inset 0 1px 0 var(--g-hi);
+}
+.fza-app tbody tr {
+  transition:
+    background-color 0.15s,
+    box-shadow 0.15s;
+}
+.fza-app tbody tr:hover {
+  background: linear-gradient(90deg, rgba(80, 140, 255, 0.16), rgba(80, 140, 255, 0.05));
+  box-shadow: inset 3px 0 0 #4d8dff;
+}
+
+/* ── dialogs and overlays ───────────────────────────────────────────────── */
+.fza-app .fixed.inset-0 {
+  -webkit-backdrop-filter: blur(8px) saturate(1.2);
+  backdrop-filter: blur(8px) saturate(1.2);
+  background-color: rgba(2, 6, 22, 0.55);
+}
+.fza-app [role='dialog'] {
+  border-radius: 1.1rem !important;
+  border: 1px solid var(--g-border) !important;
+  background: var(--g-panel-solid) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  box-shadow:
+    0 40px 80px -24px rgba(0, 0, 0, 0.8),
+    0 0 50px -12px rgba(60, 120, 255, 0.45),
+    inset 0 1px 0 var(--g-hi) !important;
+}
+
+/* ── small touches ──────────────────────────────────────────────────────── */
+.fza-app main {
+  position: relative;
+  z-index: 1;
+}
+.fza-app main h1 {
+  text-shadow: 0 0 22px var(--g-text-glow);
+  letter-spacing: 0.01em;
+}
+.fza-app ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.fza-app ::-webkit-scrollbar-track {
+  background: rgba(120, 150, 255, 0.06);
+  border-radius: 8px;
+}
+.fza-app ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(120, 160, 255, 0.55), rgba(70, 110, 230, 0.55));
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.fza-app ::selection {
+  background: rgba(80, 140, 255, 0.45);
+}
+
+/* the window pops in with a slight 3D tilt */
+@keyframes fza-window-in {
+  from {
+    opacity: 0;
+    transform: perspective(1200px) translateY(14px) rotateX(5deg) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1200px) none;
+  }
+}
+.fza-app .desk-window-in {
+  animation: fza-window-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fza-app::before,
+  .fza-app::after,
+  .fza-app .desk-window-in {
+    animation: none;
+  }
+  .fza-app button {
+    transition: none;
+  }
+}
+@media print {
+  .fza-app,
+  .fza-app::before,
+  .fza-app::after {
+    background: none !important;
+  }
+}
+
+/* ── printable paper (report preview, receipt, invoice) always stays white ink-on-paper ── */
+.fza-app :is(#desk-print, #invoice-print, #receipt-print) {
+  background: #fff !important;
+  color: #0f172a !important;
+  border-radius: 6px;
+  box-shadow:
+    0 18px 40px -12px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.fza-app :is(#desk-print, #invoice-print, #receipt-print) * {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  text-shadow: none !important;
+}
+.fza-app :is(#desk-print, #invoice-print, #receipt-print) thead th {
+  background: #f1f5f9;
+  box-shadow: none;
+  letter-spacing: normal;
+  border-color: #cbd5e1;
+}
+.fza-app :is(#desk-print, #invoice-print, #receipt-print) tbody tr:hover {
+  background: transparent;
+  box-shadow: none;
+}
+.fza-app :is(#desk-print, #invoice-print, #receipt-print) [class*='border-slate-'] {
+  border-color: #cbd5e1;
+}
+.fza-app :is(#desk-print, #invoice-print, #receipt-print) [class~='bg-slate-100'] {
+  background: #f1f5f9;
+}
+.fza-app :is(#desk-print, #invoice-print, #receipt-print) [class~='bg-slate-50'] {
+  background: #f8fafc;
+}
+.fza-app :is(#desk-print, #invoice-print, #receipt-print) [class~='bg-white'] {
+  background: #fff;
+  box-shadow: none;
+}

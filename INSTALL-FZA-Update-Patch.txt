@@ -1,0 +1,29 @@
+FZA RETAIL-POS UPDATE PATCH  (apply after the Sale-Menu and Branding patches)
+
+WHAT IS IN IT
+ 1. Client Admin rights: a Client Admin created by the Master Admin now starts with NO rights
+    (only the basic baseline). The Master Admin assigns every module / form / report right in
+    Master Admin > open the client > Manage users (Security File) > click the Client Admin >
+    tick the rights > Save. Nothing is granted automatically any more, and the seed no longer
+    gives owners full access. Existing clients keep the rights they already have; the Master
+    Admin can now edit them too. A business's own admins cannot change the Client Admin's rights.
+ 2. Name changed to "FZA Retail-POS" everywhere (window title, header, installer, About box).
+ 3. 3D glass look for everything after sign-in (menus, modules, forms, tables, reports, dialogs,
+    Sale windows). The opening splash and the round sign-in badge are NOT changed.
+ 4. FZA logo replaces the Electron icon (window, taskbar, .exe, installer, shortcuts, header).
+
+INSTALL
+ 1. Unzip over the project root (allow overwrite). It does not touch your root package.json.
+ 2. pnpm install
+ 3. pnpm --filter @mafk/shared --filter @mafk/validation --filter @mafk/database run build
+ 4. pnpm --filter @mafk/web run build
+ 5. Redeploy the API to Vercel (git push / vercel --prod) - needed for item 1.
+ 6. pnpm --filter @mafk/desktop run dist:win   -> install the NEW .exe
+    (the old "MAFK" app can be uninstalled; the new one installs as "FZA Retail-POS")
+ 7. No database migration is needed for this patch.
+
+NOTE
+ - After the update, sign in as Master Admin, open a client and check/assign its Client Admin's
+   rights. Until rights are assigned, a NEW Client Admin sees the message "No rights have been
+   assigned to your account yet".
+ - Tests: API 354, real-PostgreSQL 83, web 96, desktop 33, shared 90; lint, format, typecheck clean.

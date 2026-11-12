@@ -17,6 +17,8 @@ export interface AdminActor {
   id: string;
   tenantId: string;
   permissions: ReadonlySet<string>;
+  /** The platform Master Admin acting on a business: may assign rights to that business's Client Master Admin. */
+  platform?: boolean;
 }
 
 export interface AdminUserView {
@@ -83,7 +85,8 @@ export class AdminSecurityService {
       profile: { ...profile, fbrTokenSet: !!fbrToken, fbrTokenHint: hint(fbrToken) },
       rights,
       rightsSource: saved ? 'saved' : 'role',
-      rightsEditable: d.systemRole !== 'CLIENT_MASTER_ADMIN' && d.id !== actor.id,
+      rightsEditable:
+        d.id !== actor.id && (d.systemRole !== 'CLIENT_MASTER_ADMIN' || actor.platform === true),
       effectivePermissions: d.rolePermissionKeys,
     };
   }
@@ -222,16 +225,16 @@ export class AdminSecurityService {
     const isSelf = target.id === actor.id;
     const isOwner = target.systemRole === 'CLIENT_MASTER_ADMIN';
 
-    if (input.rights && (isSelf || isOwner)) {
+    if (input.rights && (isSelf || (isOwner && !actor.platform))) {
       throw new DomainError(
         'PROTECTED_USER',
         isSelf
           ? 'You cannot change your own rights.'
-          : 'The Client Master Admin always has full access and cannot be restricted.',
+          : 'Only the Master Admin can assign rights to the Client Master Admin.',
         403,
       );
     }
-    if (input.status && (isSelf || isOwner)) {
+    if (input.status && (isSelf || (isOwner && !actor.platform))) {
       throw new DomainError('PROTECTED_USER', 'This account cannot be disabled here.', 403);
     }
 
@@ -244,6 +247,7 @@ export class AdminSecurityService {
       ? {
           selection: input.rights as RightsSelection,
           permissionKeys: this.permissionsFor(actor, input.rights as RightsSelection),
+          ...(isOwner && actor.platform ? { ownerRole: true } : {}),
         }
       : undefined;
 

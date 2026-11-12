@@ -1,4 +1,4 @@
-// Electron main process for MAFK-24/7 Retail-Flow POS (client only: the API and PostgreSQL run on the server PC).
+// Electron main process for FZA Retail-POS (client only: the API and PostgreSQL run on the server PC).
 //
 // Security model (see docs/DESKTOP.md):
 //  - The UI is served from a private scheme, mafk-app://local, from the built web app. No remote code is loaded.
@@ -30,6 +30,8 @@ const SETTINGS_PATH = '/__desktop/settings.html';
 /** The round sign-in badge the user sees first (rendered by the web app, only inside this shell). */
 const LAUNCHER_PATH = '/launcher';
 const ASSETS_DIR = path.resolve(__dirname, '..', 'assets');
+/** The FZA logo, used for every window and the taskbar (replaces the default Electron icon). */
+const APP_ICON = path.join(ASSETS_DIR, 'icon.png');
 const webRoot = (): string =>
   app.isPackaged
     ? path.join(process.resourcesPath, 'web')
@@ -189,7 +191,8 @@ const createMainWindow = (): BrowserWindow => {
     show: false,
     opacity: 0,
     backgroundColor: '#050816',
-    title: 'MAFK-24/7 Retail-Flow POS',
+    icon: APP_ICON,
+    title: 'FZA Retail-POS',
     webPreferences,
   });
   mainWindow = win;
@@ -227,7 +230,8 @@ const createLauncher = (): void => {
     show: false,
     center: true,
     backgroundColor: '#00000000',
-    title: 'MAFK Retail-Flow POS',
+    icon: APP_ICON,
+    title: 'FZA Retail-POS',
     webPreferences,
   });
   launcherWindow = win;
@@ -270,6 +274,7 @@ const openSettings = (): void => {
     minimizable: false,
     maximizable: false,
     title: 'Server settings',
+    icon: APP_ICON,
     ...(mainWindow && !mainWindow.isDestroyed() ? { parent: mainWindow, modal: true } : {}),
     autoHideMenuBar: true,
     webPreferences,
@@ -381,8 +386,8 @@ const buildMenu = (): void => {
           click: () => {
             void dialog.showMessageBox({
               type: 'info',
-              title: 'About MAFK-24/7 Retail-Flow POS',
-              message: `MAFK-24/7 Retail-Flow POS ${app.getVersion()}`,
+              title: 'About FZA Retail-POS',
+              message: `FZA Retail-POS ${app.getVersion()}`,
               detail: `Server: ${config.serverUrl}\nElectron ${process.versions.electron} · Chromium ${process.versions.chrome} · Node ${process.versions.node}`,
             });
           },

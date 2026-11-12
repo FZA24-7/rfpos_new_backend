@@ -117,16 +117,17 @@ export const Shell = ({
   }, [dark]);
 
   return (
-    <div className="min-h-screen">
-      <header className="no-print border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div className="fza-app min-h-screen">
+      <header className="fza-header no-print border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <div>
-            <p className="text-sm font-semibold text-slate-900 dark:text-white">
-              MAFK Retail-Flow POS
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {user?.client ? `${user.client.name} (${user.client.code})` : 'Master Admin'}
-            </p>
+          <div className="flex items-center gap-3">
+            <img src="/fza-logo.png" alt="" aria-hidden="true" className="fza-logo" />
+            <div>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">FZA Retail-POS</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {user?.client ? `${user.client.name} (${user.client.code})` : 'Master Admin'}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {user ? (

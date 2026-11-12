@@ -93,12 +93,7 @@ export const DesktopLauncher = () => {
     <div className="launcher-stage" data-testid="launcher">
       <div className={`launcher-badge ${phase === 'unlocking' ? 'launcher-unlock' : ''}`}>
         <div className="launcher-face">
-          <img
-            src={splashImage}
-            alt="MAFK Retail-Flow POS"
-            draggable={false}
-            className="launcher-logo"
-          />
+          <img src={splashImage} alt="FZA Retail-POS" draggable={false} className="launcher-logo" />
           <div className="launcher-sweep" aria-hidden="true" />
           {phase === 'unlocking' ? (
             <div className="launcher-panel launcher-welcome" role="status" aria-live="polite">

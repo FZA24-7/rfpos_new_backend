@@ -168,7 +168,11 @@ export class FakeAdminRepository implements AdminRepository {
     }
     if (input.rights) {
       const ownRole = this.roles.roles.get(user.roleId);
-      if (ownRole && user.roleId === `role-user-${userId}`) {
+      if (
+        ownRole &&
+        (user.roleId === `role-user-${userId}` ||
+          (input.rights.ownerRole && ownRole.systemRole === 'CLIENT_MASTER_ADMIN'))
+      ) {
         this.roles.seed({ ...ownRole, permissionKeys: input.rights.permissionKeys });
       } else {
         // never edit a shared role: move the user to a private one

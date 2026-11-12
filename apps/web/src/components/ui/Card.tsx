@@ -2,7 +2,7 @@ import type { HTMLAttributes } from 'react';
 
 export const Card = ({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={`rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 ${className}`}
+    className={`glass-card rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 ${className}`}
     {...props}
   />
 );

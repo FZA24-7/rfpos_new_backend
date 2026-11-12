@@ -294,7 +294,8 @@ const AuthenticatedApp = () => {
     default:
       content = (
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Your account has not been granted access to any module yet. Ask an administrator.
+          No rights have been assigned to your account yet. Please ask the Master Admin to assign
+          them.
         </p>
       );
   }

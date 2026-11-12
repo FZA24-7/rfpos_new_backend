@@ -742,11 +742,17 @@ export const CashActivityScreen = ({
               </DeskSelect>
               <LookupButton label="Find shop" onClick={() => setPickShop(true)} />
             </Row>
-            <Row label="Sale Date" htmlFor="ca-date" tone="blue" labelWidth="w-24">
+            <Row
+              label="Sale Date"
+              htmlFor="ca-date"
+              tone="blue"
+              labelWidth="w-24"
+              contentClass="flex-wrap"
+            >
               <DeskInput
                 id="ca-date"
                 type="date"
-                className="w-40"
+                className="!w-40 shrink-0"
                 value={day}
                 max={data.today}
                 onChange={(e) => setDate(e.target.value)}
@@ -997,14 +1003,14 @@ export const CashActivityScreen = ({
               <DeskInput
                 type="date"
                 aria-label="List from"
-                className="w-40"
+                className="!w-44 shrink-0"
                 value={fileFrom || day}
                 onChange={(e) => setFileFrom(e.target.value)}
               />
               <DeskInput
                 type="date"
                 aria-label="List to"
-                className="w-40"
+                className="!w-44 shrink-0"
                 value={fileTo || day}
                 onChange={(e) => setFileTo(e.target.value)}
               />

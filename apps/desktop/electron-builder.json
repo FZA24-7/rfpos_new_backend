@@ -1,7 +1,7 @@
 {
   "appId": "com.mafk.retailflow",
-  "productName": "MAFK Retail-Flow POS",
-  "copyright": "MAFK-24/7",
+  "productName": "FZA Retail-POS",
+  "copyright": "FZA",
   "asar": true,
   "npmRebuild": false,
   "directories": {
@@ -15,6 +15,7 @@
     }
   ],
   "win": {
+    "icon": "assets/icon.ico",
     "target": [
       {
         "target": "nsis",
@@ -23,6 +24,9 @@
     ]
   },
   "nsis": {
+    "installerIcon": "assets/icon.ico",
+    "uninstallerIcon": "assets/icon.ico",
+    "installerHeaderIcon": "assets/icon.ico",
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
@@ -31,5 +35,5 @@
     "deleteAppDataOnUninstall": false
   },
   "publish": null,
-  "executableName": "MAFK-RetailFlow-POS"
+  "executableName": "FZA-Retail-POS"
 }

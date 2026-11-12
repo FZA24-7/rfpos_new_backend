@@ -19,7 +19,7 @@ describe('Opening splash', () => {
     vi.useFakeTimers();
     const onDone = vi.fn();
     render(<SplashScreen onDone={onDone} />);
-    expect(screen.getByAltText('MAFK Retail-Flow POS')).toBeTruthy();
+    expect(screen.getByAltText('FZA Retail-POS')).toBeTruthy();
     expect(onDone).not.toHaveBeenCalled();
     act(() => {
       vi.advanceTimersByTime(3500);

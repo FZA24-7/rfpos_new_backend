@@ -2,7 +2,7 @@
 // data (the permission catalog). Tenant creation, licenses and the first Client
 // Master Admin are created via the Master Admin API/UI in later phases, not here -
 // per the spec, there must be no hardcoded business data or default tenants.
-import { isGrantableToTenantRole, PERMISSION_CATALOG } from '@mafk/shared';
+import { PERMISSION_CATALOG } from '@mafk/shared';
 import { createPrismaClient } from './client.js';
 import { loadExampleEnv } from './load-example-env.js';
 
@@ -24,29 +24,8 @@ async function main(): Promise<void> {
     await prisma.permission.createMany({ data: wanted, skipDuplicates: true });
     const added = (await prisma.permission.count()) - before;
 
-    // Businesses created before a permission existed (for example the Administrator permissions) keep their Client
-    // Master Admin role; give it every grantable permission so the owner is never locked out of a new screen. Only the
-    // owner role is touched: Manager, Cashier, Inventory Staff and per-user roles are left exactly as they are.
-    const grantable = await prisma.permission.findMany({
-      where: { key: { in: PERMISSION_CATALOG.filter((k) => isGrantableToTenantRole(k)) } },
-      select: { id: true },
-    });
-    const ownerRoles = await prisma.role.findMany({
-      where: { systemRole: 'CLIENT_MASTER_ADMIN', tenantId: { not: null } },
-      select: { id: true },
-    });
-    let granted = 0;
-    for (const role of ownerRoles) {
-      const res = await prisma.rolePermission.createMany({
-        data: grantable.map((p) => ({ roleId: role.id, permissionId: p.id })),
-        skipDuplicates: true,
-      });
-      granted += res.count;
-    }
-    // eslint-disable-next-line no-console -- seed scripts are console-driven CLI tools
-    console.log(
-      `Owner roles synced: ${ownerRoles.length} role(s), ${granted} permission(s) added.`,
-    );
+    // Rights are NEVER granted automatically any more: the Master Admin assigns each Client Master Admin's rights
+    // (Master Admin > client > Security File). Existing owners keep exactly what they already hold.
     // eslint-disable-next-line no-console -- seed scripts are console-driven CLI tools
     console.log(
       `Seed complete. Permission catalog: ${PERMISSION_CATALOG.length} entries ensured (${added} new).`,

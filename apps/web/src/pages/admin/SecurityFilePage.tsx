@@ -813,7 +813,7 @@ export const SecurityFilePage = ({
               <p className="border-b border-slate-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-slate-700 dark:bg-amber-900/20 dark:text-amber-200">
                 {loaded?.id === me?.id
                   ? 'You cannot change your own rights.'
-                  : 'This account always has full access; its rights cannot be changed.'}
+                  : 'Only the Master Admin can assign rights to this account.'}
               </p>
             ) : null}
             {loaded && loaded.rightsSource === 'role' && !rightsLocked ? (

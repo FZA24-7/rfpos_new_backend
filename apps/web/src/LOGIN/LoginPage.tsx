@@ -31,7 +31,7 @@ export const LoginPage = () => {
             </div>
           ) : null}
           <h1 className="mt-3 text-xl font-semibold text-slate-900 dark:text-white">
-            MAFK Retail-Flow POS
+            FZA Retail-POS
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Sign in to continue</p>
         </div>

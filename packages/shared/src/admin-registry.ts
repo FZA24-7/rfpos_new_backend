@@ -248,6 +248,12 @@ export const ADMIN_REGISTRY: readonly AdminModule[] = [
 /** Permissions every user managed through the Security File receives: the branch lookup the app shell needs. */
 export const BASELINE_PERMISSIONS: readonly string[] = ['stores.view'];
 
+/**
+ * What a NEW Client Master Admin starts with: only the baseline. The Master Admin assigns every module, form and report
+ * right afterwards (Master Admin > client > Security File) - complete access is never granted automatically.
+ */
+export const CLIENT_ADMIN_START_PERMISSIONS: readonly string[] = BASELINE_PERMISSIONS;
+
 export const findAdminModule = (key: string): AdminModule | undefined =>
   ADMIN_REGISTRY.find((m) => m.key === key);
 

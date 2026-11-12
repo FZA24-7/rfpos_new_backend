@@ -1,6 +1,6 @@
 // DATABASE STATUS (Phase 4.2): NOT yet exercised against a database (tenant provisioning, stores, licences, health).
 // Typechecked against the generated client.
-import { DEFAULT_ROLE_PERMISSIONS } from '@mafk/shared';
+import { CLIENT_ADMIN_START_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS } from '@mafk/shared';
 import type { PrismaClient } from '@mafk/database';
 import type {
   LicenseRepository,
@@ -94,7 +94,11 @@ export class PrismaTenantProvisioningRepository implements TenantProvisioningRep
         ).map((systemRole) => ({
           key: systemRole.toLowerCase().replace(/_/g, '-'),
           systemRole,
-          permissions: DEFAULT_ROLE_PERMISSIONS[systemRole],
+          // The owner starts with the baseline only; the Master Admin assigns the rest.
+          permissions:
+            systemRole === 'CLIENT_MASTER_ADMIN'
+              ? CLIENT_ADMIN_START_PERMISSIONS
+              : DEFAULT_ROLE_PERMISSIONS[systemRole],
         }));
 
         // Few round trips on purpose: on a remote database (Vercel + Supabase) every query costs a network hop, and one

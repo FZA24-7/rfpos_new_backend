@@ -96,7 +96,7 @@ describe('Master Admin - full user management for any client', () => {
     expect(s.tenantA.id).toBeTruthy();
   });
 
-  it('lists a client’s users and shows the owner’s rights as read-only (owner always has full access)', async () => {
+  it('lets the Master Admin assign rights to the Client Master Admin (nothing is automatic), keeping the owner role', async () => {
     const { s, app, master, base } = await setup();
     const list = await request(app).get(`${base}/users`).set(master);
     expect(list.status).toBe(200);
@@ -105,12 +105,15 @@ describe('Master Admin - full user management for any client', () => {
     );
     expect(owner).toBeTruthy();
     const detail = await request(app).get(`${base}/users/${owner!.id}`).set(master);
-    expect(detail.body.rightsEditable).toBe(false); // shown read-only...
-    const restrict = await request(app)
+    expect(detail.body.rightsEditable).toBe(true); // the Master Admin can assign this owner's rights
+    const saved = await request(app)
       .patch(`${base}/users/${owner!.id}`)
       .set(master)
-      .send({ rights: { modules: [], items: {} } });
-    expect(restrict.status).toBe(403); // ...the owner can never be locked out
+      .send({ rights: { modules: ['MASTER'], items: { BRANDS: ['access'] } } });
+    expect(saved.status).toBe(200);
+    expect(saved.body.systemRole).toBe('CLIENT_MASTER_ADMIN'); // still the owner, not a custom user
+    expect(saved.body.effectivePermissions).toContain('brands.view');
+    expect(saved.body.effectivePermissions).not.toContain('users.manage');
   });
 
   it('is limited to the named client: a user of A cannot be reached through B, and unknown clients are 404', async () => {

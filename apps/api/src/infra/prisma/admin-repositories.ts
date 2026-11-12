@@ -253,7 +253,10 @@ export class PrismaAdminRepository implements AdminRepository {
         // Rights always live on the user's PRIVATE role; a shared role (Manager, Cashier ...) is never edited.
         const ownKey = `user-${userId}`;
         let roleId =
-          user.role.key === ownKey && user.role.systemRole === 'CUSTOM' ? user.role.id : null;
+          (input.rights.ownerRole && user.role.systemRole === 'CLIENT_MASTER_ADMIN') ||
+          (user.role.key === ownKey && user.role.systemRole === 'CUSTOM')
+            ? user.role.id
+            : null;
         if (!roleId) {
           const role = await tx.role.create({
             data: {

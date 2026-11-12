@@ -61,7 +61,7 @@ export const SplashScreen = ({ onDone }: { onDone: () => void }) => {
     >
       <img
         src={splashImage}
-        alt="MAFK Retail-Flow POS"
+        alt="FZA Retail-POS"
         draggable={false}
         className="splash-pop max-h-[68vh] w-[min(92vw,900px)] select-none object-contain"
       />

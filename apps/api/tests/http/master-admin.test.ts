@@ -120,6 +120,8 @@ describe('POST /api/master/tenants - transactional client creation', () => {
     const newAdminLogin = await loginAs(app, 'newco.admin', 'NewCoAdminPass123');
     expect(newAdminLogin.status).toBe(200);
     expect(newAdminLogin.body.user.tenantId).toBe(createRes.body.tenantId);
+    // complete rights are NOT granted automatically: only the baseline until the Master Admin assigns the rest
+    expect(newAdminLogin.body.user.permissions).toEqual(['stores.view']);
   });
 
   it('rejects creation from a non-Master-Admin (403) even with a valid session', async () => {

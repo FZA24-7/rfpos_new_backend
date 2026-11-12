@@ -54,7 +54,12 @@ export interface UpdateAdminUserRecord {
   storeId?: string | null;
   /** Only the fields that were sent. */
   profile?: Partial<UserProfileData>;
-  rights?: { selection: RightsSelection; permissionKeys: string[] };
+  rights?: {
+    selection: RightsSelection;
+    permissionKeys: string[];
+    /** Master Admin editing a Client Master Admin: the rights go on that user's own (owner) role, which stays an owner role. */
+    ownerRole?: boolean;
+  };
 }
 
 export interface UserCategoryRow {

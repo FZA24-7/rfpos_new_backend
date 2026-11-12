@@ -13,6 +13,7 @@ import {
 import {
   addDecimalStrings,
   compareDecimalStrings,
+  CLIENT_ADMIN_START_PERMISSIONS,
   DEFAULT_ROLE_PERMISSIONS,
   roundDecimalString,
 } from '@mafk/shared';
@@ -398,7 +399,10 @@ export class FakeTenantProvisioningRepository implements TenantProvisioningRepos
         id: roleId,
         tenantId,
         systemRole,
-        permissionKeys: DEFAULT_ROLE_PERMISSIONS[systemRole],
+        permissionKeys:
+          systemRole === 'CLIENT_MASTER_ADMIN'
+            ? CLIENT_ADMIN_START_PERMISSIONS
+            : DEFAULT_ROLE_PERMISSIONS[systemRole],
       });
       roleIds[systemRole] = roleId;
     }

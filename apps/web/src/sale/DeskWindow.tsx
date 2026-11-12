@@ -27,7 +27,7 @@ export const DeskWindow = ({
   <section
     aria-label={title}
     data-testid={testId}
-    className={`mx-auto w-full ${width} overflow-hidden rounded-xl border border-slate-300 bg-slate-50 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900 desk-window-in`}
+    className={`mx-auto w-full ${width} overflow-hidden rounded-xl border border-slate-300 bg-slate-50 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900 desk-window desk-window-in`}
   >
     <header className="flex items-center gap-2.5 bg-gradient-to-r from-slate-900 via-slate-800 to-brand-700 px-3.5 py-2 text-white">
       <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white/15">
@@ -95,12 +95,15 @@ export const Row = ({
   children,
   tone = 'default',
   labelWidth = 'w-32',
+  contentClass = '',
 }: {
   label: string;
   htmlFor?: string;
   children: ReactNode;
   tone?: 'default' | 'brown' | 'green' | 'blue' | 'red';
   labelWidth?: string;
+  /** Extra classes for the control area (for example `flex-wrap`). */
+  contentClass?: string;
 }) => {
   const toneClass = {
     default: 'text-slate-800 dark:text-slate-200',
@@ -117,7 +120,7 @@ export const Row = ({
       >
         {label}
       </label>
-      <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
+      <div className={`flex min-w-0 flex-1 items-center gap-2 ${contentClass}`}>{children}</div>
     </div>
   );
 };
