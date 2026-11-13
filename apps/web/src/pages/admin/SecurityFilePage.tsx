@@ -33,13 +33,18 @@ import { Spinner } from '../../components/ui/Spinner.js';
 import { Badge } from '../../components/ui/Badge.js';
 import {
   cloneSelection,
+  clearEverything,
+  clearModule,
   emptySelection,
+  grantEverything,
+  grantModuleAll,
   grantedCount,
   isModuleApproved,
   itemsByKind,
   missingDependencies,
   rightsOf,
   sameSelection,
+  setColumn,
   setModuleApproved,
   toggleRight,
 } from './rightsModel.js';
@@ -748,6 +753,32 @@ export const SecurityFilePage = ({
                     {rightsHint}
                   </p>
                 ) : null}
+                <div className="mb-2 flex gap-2">
+                  <button
+                    type="button"
+                    disabled={!mayChangeRights || !registry}
+                    className="rounded border border-slate-300 px-3 py-1 text-xs font-semibold disabled:opacity-40 dark:border-slate-600"
+                    onClick={() => {
+                      if (!registry) return;
+                      ensureEdit();
+                      setRights((r) => grantEverything(r, registry));
+                    }}
+                  >
+                    Grant everything
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!mayChangeRights || !registry}
+                    className="rounded border border-slate-300 px-3 py-1 text-xs font-semibold disabled:opacity-40 dark:border-slate-600"
+                    onClick={() => {
+                      if (!registry) return;
+                      ensureEdit();
+                      setRights((r) => clearEverything(r, registry));
+                    }}
+                  >
+                    Clear everything
+                  </button>
+                </div>
                 <table className="w-full max-w-xl text-sm">
                   <thead className="bg-slate-100 text-left dark:bg-slate-800">
                     <tr>
@@ -755,6 +786,7 @@ export const SecurityFilePage = ({
                       <th className="px-2 py-1.5">Module Name</th>
                       <th className="px-2 py-1.5">Allowed</th>
                       <th className="px-2 py-1.5">Granted items</th>
+                      <th className="px-2 py-1.5">Quick</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -776,6 +808,32 @@ export const SecurityFilePage = ({
                         </td>
                         <td className="px-2 py-1.5">
                           {grantedCount(rights, m)} / {m.items.length}
+                        </td>
+                        <td className="whitespace-nowrap px-2 py-1.5">
+                          <button
+                            type="button"
+                            disabled={!mayChangeRights}
+                            aria-label={`Grant all ${m.name}`}
+                            className="mr-1 rounded border border-slate-300 px-2 py-0.5 text-xs disabled:opacity-40 dark:border-slate-600"
+                            onClick={() => {
+                              ensureEdit();
+                              setRights((r) => grantModuleAll(r, m));
+                            }}
+                          >
+                            Grant all
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!mayChangeRights}
+                            aria-label={`Clear ${m.name}`}
+                            className="rounded border border-slate-300 px-2 py-0.5 text-xs disabled:opacity-40 dark:border-slate-600"
+                            onClick={() => {
+                              ensureEdit();
+                              setRights((r) => clearModule(r, m));
+                            }}
+                          >
+                            Clear
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -818,9 +876,9 @@ export const SecurityFilePage = ({
             ) : null}
             {loaded && loaded.rightsSource === 'role' && !rightsLocked ? (
               <p className="border-b border-slate-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-slate-700 dark:bg-amber-900/20 dark:text-amber-200">
-                These rights come from the shared role "
-                {loaded.systemRole.replace(/_/g, ' ').toLowerCase()}". Saving here gives this user
-                their own rights.
+                {loaded.systemRole === 'CLIENT_MASTER_ADMIN'
+                  ? 'The Client Master Admin starts with basic access only. Tick the modules, forms and reports this account may use, then Save.'
+                  : `These rights come from the shared role "${loaded.systemRole.replace(/_/g, ' ').toLowerCase()}". Saving here gives this user their own rights.`}
               </p>
             ) : null}
             {mode !== 'idle' && module && !approved ? (
@@ -837,6 +895,24 @@ export const SecurityFilePage = ({
                     {(['access', 'add', 'edit', 'delete'] as const).map((r) => (
                       <th key={r} className="px-2 py-1.5 text-center">
                         {RIGHT_LABELS[r]}
+                        {module && gridItems.some((i) => i.rights.includes(r)) ? (
+                          <input
+                            type="checkbox"
+                            className="ml-1.5 align-middle"
+                            aria-label={`All ${RIGHT_LABELS[r]}`}
+                            title={`Tick / clear ${RIGHT_LABELS[r]} for every row`}
+                            disabled={gridDisabled}
+                            checked={gridItems
+                              .filter((i) => i.rights.includes(r))
+                              .every((i) => rightsOf(rights, i.key).includes(r))}
+                            onChange={(e) => {
+                              ensureEdit();
+                              setRights((cur) =>
+                                setColumn(cur, module, gridItems, r, e.target.checked),
+                              );
+                            }}
+                          />
+                        ) : null}
                       </th>
                     ))}
                   </tr>

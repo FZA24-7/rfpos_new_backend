@@ -91,3 +91,36 @@ export const itemsByKind = (module: RegistryModule, kind: 'form' | 'report'): Re
 
 export const grantedCount = (sel: RightsSelection, module: RegistryModule): number =>
   module.items.filter((i) => (sel.items[i.key] ?? []).length > 0).length;
+
+/** Approves a module and ticks every right of every form and report in it (Master Admin shortcut). */
+export const grantModuleAll = (sel: RightsSelection, module: RegistryModule): RightsSelection => {
+  const next = cloneSelection(sel);
+  if (!next.modules.includes(module.key)) next.modules.push(module.key);
+  for (const item of module.items) {
+    if (item.rights.length > 0) next.items[item.key] = [...item.rights];
+  }
+  return next;
+};
+
+/** Removes the module approval and every right inside it. */
+export const clearModule = (sel: RightsSelection, module: RegistryModule): RightsSelection =>
+  setModuleApproved(sel, module, false);
+
+export const grantEverything = (sel: RightsSelection, registry: Registry): RightsSelection =>
+  registry.modules.reduce((s, m) => grantModuleAll(s, m), sel);
+
+export const clearEverything = (sel: RightsSelection, registry: Registry): RightsSelection =>
+  registry.modules.reduce((s, m) => clearModule(s, m), sel);
+
+/** Ticks (or clears) one right for every item currently shown in the grid. */
+export const setColumn = (
+  sel: RightsSelection,
+  module: RegistryModule,
+  items: RegistryItem[],
+  right: Right,
+  on: boolean,
+): RightsSelection => {
+  let s = on ? setModuleApproved(sel, module, true) : sel;
+  for (const item of items) s = toggleRight(s, module, item, right, on);
+  return s;
+};

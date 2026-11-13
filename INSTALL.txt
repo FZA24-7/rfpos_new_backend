@@ -1,0 +1,21 @@
+FZA Retail-POS - Rights Patch (3 files)
+
+WHY the Sale menu showed only "Point of Sale":
+A screen appears in the menu only when its right is ticked for that user.
+This client's admin only had Point of Sale ticked. The Master Admin must tick the rest.
+This patch makes that one click: Grant all / Clear per module, Grant everything / Clear everything,
+and a tick-all box on each rights column.
+
+INSTALL
+1. Unzip and copy the 3 files into your project, same folder paths (overwrite).
+2. In the project folder (PowerShell):
+     pnpm --filter @mafk/web run build
+   (for the desktop app also: pnpm --filter @mafk/desktop run dist:win)
+3. Deploy the web/API as before (git push -> Vercel). No database change.
+
+USE (Master Admin)
+1. Sign in as Master Admin (empty client code).
+2. Click the client row > Manage users & rights > Search > pick the client admin > Edit.
+3. Tab "Checks Approval": click "Grant everything" (or "Grant all" on SALE etc.).
+   Or open a module and tick the column header boxes (Access / Add / Edit / Delete).
+4. Click Save. The client admin signs out and in again: all Sale screens now show.

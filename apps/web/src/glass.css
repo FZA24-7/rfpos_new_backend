@@ -566,3 +566,10 @@ html:not(.dark) .fza-app button[class~='bg-slate-100'] {
   background: #fff;
   box-shadow: none;
 }
+
+/* links inside dialogs / tables stay readable on dark glass */
+html.dark .fza-app [role='dialog'] button[class*='text-brand-'],
+html.dark .fza-app table button[class*='text-brand-'],
+html.dark .fza-app table a[class*='text-brand-'] {
+  color: #8fb6ff;
+}
